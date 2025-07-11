@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -7,48 +7,71 @@ import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/ui/Logo';
 
 const registerSchema = yup.object().shape({
-  name: yup.string().required('Name is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
+  name: yup.string().required('Full name is required'),
+  mobile: yup
+    .string()
+    .matches(/^\d{10}$/, 'Mobile number must be 10 digits')
+    .required('Mobile number is required'),
   password: yup
     .string()
     .min(8, 'Password must be at least 8 characters')
     .required('Password is required'),
-  confirmPassword: yup
+  password2: yup
     .string()
     .oneOf([yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm Password is required'),
+    .required('Please confirm your password'),
+  address: yup.string().required('Address is required'),
 });
 
 const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
   
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     resolver: yupResolver(registerSchema),
     defaultValues: {
-      name: '',
       email: '',
+      name: '',
+      mobile: '',
       password: '',
-      confirmPassword: '',
+      password2: '',
+      address: '',
     },
   });
 
   const onSubmit = async (data) => {
+    console.log('Form submitted with data:', data);
     try {
       setIsLoading(true);
-      // In a real app, you would register the user first
-      // For now, we'll just log them in with the provided credentials
-      const success = await login(data.email, data.password);
+      // Prepare user data for registration
+      const userData = {
+        email: data.email,
+        name: data.name,
+        mobile: data.mobile,
+        password: data.password,
+        password2: data.password2,
+        address: data.address,
+      };
+      console.log('Sending registration data:', userData);
+      console.log('Attempting to register user with data:', userData);
+
+      const success = await registerUser(userData);
+      console.log('Registration success:', success);
+      
       if (success) {
-        navigate('/');
+        reset();
+        console.log('Form reset after successful registration');
       }
     } catch (error) {
       console.error('Registration error:', error);
+      // Make sure to show the error in the UI
+      toast.error(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +121,32 @@ const RegisterPage = () => {
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.name.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="mobile"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Mobile Number
+              </label>
+              <div className="mt-1">
+                <input
+                  id="mobile"
+                  name="mobile"
+                  type="tel"
+                  autoComplete="tel"
+                  className={`block w-full appearance-none rounded-md border ${
+                    errors.mobile ? 'border-red-300' : 'border-gray-300'
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
+                  {...register('mobile')}
+                />
+                {errors.mobile && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.mobile.message}
                   </p>
                 )}
               </div>
@@ -157,25 +206,50 @@ const RegisterPage = () => {
 
             <div>
               <label
-                htmlFor="confirmPassword"
+                htmlFor="password2"
                 className="block text-sm font-medium text-gray-700"
               >
                 Confirm Password
               </label>
               <div className="mt-1">
                 <input
-                  id="confirmPassword"
-                  name="confirmPassword"
+                  id="password2"
+                  name="password2"
                   type="password"
                   autoComplete="new-password"
                   className={`block w-full appearance-none rounded-md border ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    errors.password2 ? 'border-red-300' : 'border-gray-300'
                   } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
-                  {...register('confirmPassword')}
+                  {...register('password2')}
                 />
-                {errors.confirmPassword && (
+                {errors.password2 && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.confirmPassword.message}
+                    {errors.password2.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Address
+              </label>
+              <div className="mt-1">
+                <textarea
+                  id="address"
+                  name="address"
+                  rows={3}
+                  className={`block w-full appearance-none rounded-md border ${
+                    errors.address ? 'border-red-300' : 'border-gray-300'
+                  } px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm`}
+                  {...register('address')}
+                />
+                {errors.address && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.address.message}
                   </p>
                 )}
               </div>

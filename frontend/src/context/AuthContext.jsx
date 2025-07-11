@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { login as loginApi } from '../services/authService';
+import * as authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -12,56 +12,111 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // Check if user is logged in on initial load
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          // Here you would typically validate the token with your backend
-          // For now, we'll just set a mock user
-          setUser({ email: 'user@example.com' });
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
-      } finally {
-        setIsLoading(false);
+  const checkAuth = useCallback(async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
       }
-    };
-
-    checkAuth();
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      await authService.logout();
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = async (email, password) => {
     try {
       setIsLoading(true);
-      // Replace with actual API call
-      // const { data } = await loginApi({ email, password });
-      // localStorage.setItem('token', data.token);
+      const result = await authService.login(email, password);
       
-      // Mock response for now
-      localStorage.setItem('token', 'dummy-token');
-      setUser({ email });
-      setIsAuthenticated(true);
-      toast.success('Logged in successfully');
-      navigate('/');
-      return true;
+      if (result && result.user) {
+        setUser(result.user);
+        setIsAuthenticated(true);
+        toast.success('Logged in successfully');
+        navigate('/');
+        return true;
+      }
+      
+      toast.error('Login failed. Please try again.');
+      return false;
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.message || 'Login failed');
+      const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    setIsAuthenticated(false);
-    toast.success('Logged out successfully');
-    navigate('/login');
+  const register = async (userData) => {
+    try {
+      setIsLoading(true);
+      await authService.register(userData);
+      toast.success('Registration successful! Please log in.');
+      navigate('/login');
+      return true;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      toast.error(error.message || 'Registration failed');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateProfile = async (userData) => {
+    try {
+      setIsLoading(true);
+      const updatedUser = await authService.updateProfile(userData);
+      setUser(updatedUser);
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      toast.error(error.message || 'Failed to update profile');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      setIsLoading(true);
+      await authService.changePassword(currentPassword, newPassword);
+      toast.success('Password changed successfully');
+      return true;
+    } catch (error) {
+      console.error('Change password failed:', error);
+      toast.error(error.message || 'Failed to change password');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      setIsLoading(true);
+      await authService.logout();
+      setUser(null);
+      setIsAuthenticated(false);
+      toast.success('Logged out successfully');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error('Failed to log out');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -71,7 +126,10 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         isLoading,
         login,
+        register,
         logout,
+        updateProfile,
+        changePassword,
       }}
     >
       {children}

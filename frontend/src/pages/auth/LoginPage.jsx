@@ -33,10 +33,12 @@ const LoginPage = () => {
       setIsLoading(true);
       const success = await login(data.email, data.password);
       if (success) {
-        navigate('/');
+        // Navigation is handled in the AuthContext after successful login
+        return;
       }
     } catch (error) {
       console.error('Login error:', error);
+      // Error is already handled in AuthContext
     } finally {
       setIsLoading(false);
     }
