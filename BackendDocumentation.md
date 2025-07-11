@@ -1,21 +1,5 @@
 # CampusConnect Platform Documentation
 
-## 📖 Table of Contents
-1. [Project Overview](#-project-overview)
-2. [System Architecture](#-system-architecture)
-3. [Database Schema](#-database-schema)
-4. [API Documentation](#-api-documentation)
-5. [Setup Guide](#-setup-guide)
-6. [Development Workflow](#-development-workflow)
-7. [Testing](#-testing)
-8. [Deployment](#-deployment)
-9. [Troubleshooting](#-troubleshooting)
-10. [Future Enhancements](#-future-enhancements)
-
-## 🌟 Project Overview
-
-CampusConnect is a comprehensive campus management platform designed to facilitate various campus activities including lost & found services, book exchange, event management, and roommate finding.
-
 ### Core Features
 - **User Management**: Secure authentication and profile management
 - **Lost & Found**: Digital platform for reporting and claiming lost items
@@ -29,10 +13,7 @@ CampusConnect is a comprehensive campus management platform designed to facilita
 - **Framework**: Django 4.1.13
 - **API**: Django REST Framework 3.14.0
 - **Authentication**: JWT-based authentication
-- **Database**: SQLite (Development), MongoDB (Production)
-- **Caching**: Redis (Planned)
-- **Task Queue**: Celery (Planned)
-
+- **Database**: SQLite (Development), MongoDB 
 ### Frontend Architecture (Planned)
 - **Framework**: React.js
 - **State Management**: Redux
@@ -40,59 +21,6 @@ CampusConnect is a comprehensive campus management platform designed to facilita
 - **Routing**: React Router
 
 ## 🗃 Database Schema
-
-### Accounts App
-```mermaid
-erDiagram
-    USER ||--o{ USER_PROFILE : has
-    USER {
-        string email PK
-        string password
-        string name
-        string mobile
-        string address
-        datetime date_joined
-        datetime last_login
-        bool is_active
-        bool is_staff
-        bool is_superuser
-    }
-    USER_PROFILE {
-        int id PK
-        int user_id FK
-        string profile_picture
-        string bio
-        string department
-        string student_id
-        datetime created_at
-        datetime updated_at
-    }
-```
-
-### Lost & Found App
-```mermaid
-erDiagram
-    LOST_FOUND_ITEM ||--o{ USER : reported_by
-    LOST_FOUND_ITEM {
-        uuid id PK
-        string item_name
-        text description
-        string status
-        string location
-        datetime date_reported
-        datetime date_occurred
-        int reporter_id FK
-        int claimed_by_id FK
-        bool is_resolved
-        string image
-        string contact_info
-        string category
-        string color
-        string brand
-        datetime created_at
-        datetime updated_at
-    }
-```
 
 ## 📚 API Documentation
 
@@ -141,6 +69,97 @@ Content-Type: application/json
 ```
 
 ## 🛠 Setup Guide
+
+---
+
+## 🗂 Backend Folder Structure & Responsibilities
+
+Below is an overview of the backend folder structure. Each folder and key file is described with its purpose and how it connects to the rest of the application.
+
+| Path | Type | Purpose & Connections |
+|------|------|----------------------|
+| `backend/` | Folder | Root backend folder containing all Django project files and apps. |
+| `backend/manage.py` | File | Django's management script for running server, migrations, etc. Entry point for most backend commands. |
+| `backend/requirements.txt` | File | Lists all Python dependencies required to run the backend. Used by `pip install -r requirements.txt`. |
+| `backend/accounts/` | App Folder | Handles user authentication, registration, profile management. Connects with all user-based features (Lost & Found, BookBank, etc). |
+| `backend/accounts/models.py` | File | Defines custom user model and user profile. Central to authentication and user data. |
+| `backend/accounts/serializers.py` | File | Converts user and profile models to/from JSON for API use. Used in views and DRF endpoints. |
+| `backend/accounts/views.py` | File | Contains API logic for registration, login, profile, etc. Connects with frontend via REST API. |
+| `backend/accounts/permissions.py` | File | Custom permission classes for user access control. |
+| `backend/accounts/urls.py` | File | Routes API endpoints for user-related operations. Included in project-level `urls.py`. |
+| `backend/bookbank/` | App Folder | Manages book exchange and sharing features. Connects to `accounts` for user ownership. |
+| `backend/lostfound/` | App Folder | Handles lost & found item reporting, claiming, and status. Relates to `accounts` for reporter/claimer. |
+| `backend/noticeboard/` | App Folder | (Planned) Event and announcement management. Will connect to `accounts` for authoring/admin. |
+| `backend/roommate/` | App Folder | (Planned) Roommate search and matching. Connects to `accounts` for user profiles. |
+| `backend/campusconnect/` | Project Folder | Django project settings and configuration. |
+| `backend/campusconnect/settings.py` | File | Main Django settings (databases, installed apps, middleware, etc). Controls all backend behavior. |
+| `backend/campusconnect/urls.py` | File | Root URL router; includes app-specific routers. Connects frontend and backend APIs. |
+| `backend/campusconnect/wsgi.py`<br>`backend/campusconnect/asgi.py` | File | Entry points for WSGI/ASGI servers (deployment, async support). |
+| `backend/db.sqlite3` | File | Default development database (SQLite). Swappable for production DB. |
+| `backend/*/migrations/` | Folder | Tracks database schema changes for each app. Required for Django ORM. |
+
+**How these connect:**
+- `accounts` is central: nearly all apps reference users for ownership, permissions, and profile info.
+- Each app (e.g. `bookbank`, `lostfound`) defines its own models, serializers, views, and urls, but relies on `accounts` for user context.
+- `campusconnect/settings.py` and `urls.py` tie all apps together and expose the API to the frontend.
+- `migrations` folders ensure database schema is consistent and versioned.
+
+---
+
+## 🔄 Backend Data Workflow
+
+This section explains how data is handled in the CampusConnect backend—from receiving a request, to processing, storing, and returning data.
+
+### 1. Client Request (Frontend or API Consumer)
+- The client (such as the React frontend or a mobile app) sends an HTTP request to the backend API (e.g., via `fetch`, `axios`, or a form submission).
+- Example: A user submits a registration form or reports a lost item.
+
+### 2. URL Routing
+- The Django backend receives the request at a specific endpoint (e.g., `/api/accounts/register/`, `/api/lostfound/items/`).
+- The request is routed via `urls.py` in the relevant app (e.g., `accounts/urls.py`, `lostfound/urls.py`), which maps the URL to a view.
+
+### 3. View Logic
+- The view (usually a Django REST Framework APIView, ViewSet, or function) handles the request.
+- It parses request data (JSON, form data, etc.), authenticates the user (if required), and applies permissions.
+- Example: `LostFoundItemViewSet.create()` handles POST requests to create a new lost item.
+
+### 4. Serialization & Validation
+- The view passes the incoming data to a **serializer** (e.g., `LostFoundItemSerializer`).
+- The serializer validates the data (types, required fields, business rules).
+- If valid, the serializer converts the data into a Django model instance.
+
+### 5. Database Operations
+- The serializer or view saves the validated data to the database using Django ORM.
+- Data is stored in the appropriate table (e.g., `User`, `LostFoundItem`, `UserProfile`).
+- For reads (GET requests), data is queried from the database, serialized, and prepared for the response.
+
+### 6. Response Serialization
+- The serializer converts Django model instances (or querysets) back into JSON.
+- The view returns an HTTP response with the serialized data (usually JSON) and the appropriate status code.
+
+### 7. Client Receives Response
+- The frontend receives the response and updates the UI accordingly (e.g., shows a success message, displays a list of items, etc.).
+
+---
+
+### 🔗 Example: Reporting a Lost Item
+
+1. **User fills out the lost item form** in the frontend and clicks submit.
+2. **Frontend sends a POST request** to `/api/lostfound/items/` with the item data.
+3. **URL is routed** to the `LostFoundItemViewSet.create()` method.
+4. **Serializer validates** the input (e.g., checks required fields, user ownership).
+5. **Data is saved** to the `LostFoundItem` table in the database.
+6. **A response is sent** back to the frontend confirming creation, including the new item’s data.
+
+---
+
+**Key Points:**
+- **Authentication**: Most endpoints require JWT authentication. The backend checks the token and user permissions before processing.
+- **Validation**: All input data is validated before being saved to the database, preventing bad or malicious data.
+- **Separation of Concerns**: Views handle logic, serializers handle data transformation/validation, models handle storage.
+- **Extensibility**: New features can be added by creating new models, serializers, views, and URLs.
+
+---
 
 ### Prerequisites
 - Python 3.8+
