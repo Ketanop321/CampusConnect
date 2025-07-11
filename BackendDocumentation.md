@@ -201,6 +201,7 @@ This section explains how data is handled in the CampusConnect backend—from re
 
 5. **Apply database migrations**
    ```bash
+   python manage.py makemigrations
    python manage.py migrate
    ```
 
