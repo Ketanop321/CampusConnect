@@ -31,12 +31,12 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     
-    # App URLs - Temporarily disabled roommate and noticeboard until they are set up
+    # App URLs
     path('api/accounts/', include('accounts.urls')),
     path('api/bookbank/', include('bookbank.urls')),
     path('api/lostfound/', include('lostfound.urls')),
-    # path('api/roommate/', include('roommate.urls')),
-    # path('api/noticeboard/', include('noticeboard.urls')),
+    path('api/roommate/', include('roommate.urls')),
+    path('api/noticeboard/', include('noticeboard.urls')),
 ]
 
 # Serve media files in development
