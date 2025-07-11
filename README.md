@@ -68,6 +68,7 @@ A comprehensive campus management platform built with Django and Django REST Fra
 
 4. **Apply migrations**
    ```bash
+   python manage.py makemigrations
    python manage.py migrate
    ```
 
