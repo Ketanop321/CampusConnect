@@ -1,8 +1,7 @@
 import { useState, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+ 
 import './App.css'
 
 // Layouts
