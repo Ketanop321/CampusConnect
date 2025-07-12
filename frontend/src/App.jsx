@@ -15,6 +15,12 @@ import LostAndFoundPage from './pages/lost-found/LostAndFoundPage';
 import BookBankPage from './pages/book-bank/BookBankPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
+import RoommatePage from './pages/roommate/RoommatePage';
+import RoommateDetailPage from './pages/roommate/RoommateDetailPage';
+import RoommateForm from './pages/roommate/RoommateForm';
+import NoticeboardPage from './pages/noticeboard/NoticeboardPage';
+import NoticeboardDetailPage from './pages/noticeboard/NoticeboardDetailPage';
+import EventForm from './pages/noticeboard/EventForm';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -69,6 +75,22 @@ function App() {
             <Route path="lost-found" element={<LostAndFoundPage />} />
             <Route path="book-bank" element={<BookBankPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            
+            {/* Roommate Routes */}
+            <Route path="roommate">
+              <Route index element={<RoommatePage />} />
+              <Route path="new" element={<RoommateForm />} />
+              <Route path=":id" element={<RoommateDetailPage />} />
+              <Route path=":id/edit" element={<RoommateForm isEdit={true} />} />
+            </Route>
+            
+            {/* Noticeboard Routes */}
+            <Route path="noticeboard">
+              <Route index element={<NoticeboardPage />} />
+              <Route path="new" element={<EventForm />} />
+              <Route path=":id" element={<NoticeboardDetailPage />} />
+              <Route path=":id/edit" element={<EventForm isEdit={true} />} />
+            </Route>
           </Route>
 
           {/* 404 Route */}

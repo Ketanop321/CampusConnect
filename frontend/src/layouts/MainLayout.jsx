@@ -6,9 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import Logo from '../components/ui/Logo';
 
 const navigation = [
-  { name: 'Home', href: '/', current: true },
-  { name: 'Lost & Found', href: '/lost-found', current: false },
-  { name: 'Book Bank', href: '/book-bank', current: false },
+  { name: 'Home', href: '/', current: window.location.pathname === '/' },
+  { name: 'Lost & Found', href: '/lost-found', current: window.location.pathname.startsWith('/lost-found') },
+  { name: 'Book Bank', href: '/book-bank', current: window.location.pathname.startsWith('/book-bank') },
+  { name: 'Roommate', href: '/roommate', current: window.location.pathname.startsWith('/roommate') },
+  { name: 'Noticeboard', href: '/noticeboard', current: window.location.pathname.startsWith('/noticeboard') },
 ];
 
 function classNames(...classes) {
