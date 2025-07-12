@@ -5,9 +5,15 @@ import * as authService from '../services/authService';
 
 const AuthContext = createContext();
 
+// Helper function to get token from localStorage
+const getStoredToken = () => {
+  return localStorage.getItem('access_token');
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(getStoredToken());
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getStoredToken());
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -37,7 +43,9 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.login(email, password);
       
       if (result && result.user) {
+        const accessToken = result.access || getStoredToken();
         setUser(result.user);
+        setToken(accessToken);
         setIsAuthenticated(true);
         toast.success('Logged in successfully');
         navigate('/');
@@ -105,17 +113,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      setIsLoading(true);
       await authService.logout();
-      setUser(null);
-      setIsAuthenticated(false);
-      toast.success('Logged out successfully');
-      navigate('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
-      toast.error('Failed to log out');
+      console.error('Logout error:', error);
     } finally {
-      setIsLoading(false);
+      setUser(null);
+      setToken(null);
+      setIsAuthenticated(false);
+      navigate('/login');
     }
   };
 
@@ -123,10 +128,10 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        token,
         isAuthenticated,
         isLoading,
         login,
-        register,
         logout,
         updateProfile,
         changePassword,

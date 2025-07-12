@@ -258,20 +258,20 @@ const LostFoundForm = ({ isOpen, onClose, onSubmit, initialData, isSubmitting: i
                         </div>
                         
                         <div>
-                          <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">
+                          <label htmlFor="item_name" className="block text-sm font-medium text-gray-700">
                             Item Name *
                           </label>
                           <input
                             type="text"
-                            id="itemName"
-                            {...register('itemName')}
+                            id="item_name"
+                            {...register('item_name')}
                             className={`mt-1 block w-full rounded-md border ${
-                              errors.itemName ? 'border-red-300' : 'border-gray-300'
+                              errors.item_name ? 'border-red-300' : 'border-gray-300'
                             } shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm`}
                             placeholder="e.g., Black Backpack, iPhone 13, etc."
                           />
-                          {errors.itemName && (
-                            <p className="mt-1 text-sm text-red-600">{errors.itemName.message}</p>
+                          {errors.item_name && (
+                            <p className="mt-1 text-sm text-red-600">{errors.item_name.message}</p>
                           )}
                         </div>
                         
@@ -295,19 +295,19 @@ const LostFoundForm = ({ isOpen, onClose, onSubmit, initialData, isSubmitting: i
                           </div>
                           
                           <div>
-                            <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="date_occurred" className="block text-sm font-medium text-gray-700">
                               Date *
                             </label>
                             <input
                               type="date"
-                              id="date"
-                              {...register('date')}
+                              id="date_occurred"
+                              {...register('date_occurred')}
                               className={`mt-1 block w-full rounded-md border ${
-                                errors.date ? 'border-red-300' : 'border-gray-300'
+                                errors.date_occurred ? 'border-red-300' : 'border-gray-300'
                               } shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm`}
                             />
-                            {errors.date && (
-                              <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
+                            {errors.date_occurred && (
+                              <p className="mt-1 text-sm text-red-600">{errors.date_occurred.message}</p>
                             )}
                           </div>
                         </div>
@@ -334,20 +334,20 @@ const LostFoundForm = ({ isOpen, onClose, onSubmit, initialData, isSubmitting: i
                         </div>
                         
                         <div>
-                          <label htmlFor="contact" className="block text-sm font-medium text-gray-700">
+                          <label htmlFor="contact_info" className="block text-sm font-medium text-gray-700">
                             Contact Email *
                           </label>
                           <input
                             type="email"
-                            id="contact"
-                            {...register('contact')}
+                            id="contact_info"
+                            {...register('contact_info')}
                             className={`mt-1 block w-full rounded-md border ${
-                              errors.contact ? 'border-red-300' : 'border-gray-300'
+                              errors.contact_info ? 'border-red-300' : 'border-gray-300'
                             } shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm`}
                             placeholder="your.email@example.com"
                           />
-                          {errors.contact && (
-                            <p className="mt-1 text-sm text-red-600">{errors.contact.message}</p>
+                          {errors.contact_info && (
+                            <p className="mt-1 text-sm text-red-600">{errors.contact_info.message}</p>
                           )}
                         </div>
                         

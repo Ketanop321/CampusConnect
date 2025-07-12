@@ -26,8 +26,9 @@ const LostAndFoundPage = () => {
 
   // Fetch all lost and found items
   const { data: itemsData, isLoading, error } = useQuery({
-    queryKey: ['lostFoundItems'],
-    queryFn: lostFoundService.getLostFoundItems,
+    queryKey: ['lostFoundItems', token],
+    queryFn: () => lostFoundService.getLostFoundItems(token),
+    enabled: !!token, // Only fetch if token exists
   });
   
   // Ensure items is always an array
@@ -35,20 +36,31 @@ const LostAndFoundPage = () => {
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (itemData) => lostFoundService.createLostFoundItem(itemData, token),
+    mutationFn: (itemData) => {
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      return lostFoundService.createLostFoundItem(itemData, token);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
       toast.success('Item created successfully');
       setIsFormOpen(false);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to create item');
+      console.error('Create item error:', error);
+      toast.error(error.response?.data?.detail || error.message || 'Failed to create item');
     },
   });
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }) => lostFoundService.updateLostFoundItem(id, data, token),
+    mutationFn: ({ id, ...data }) => {
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      return lostFoundService.updateLostFoundItem(id, data, token);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
       toast.success('Item updated successfully');
@@ -97,13 +109,22 @@ const LostAndFoundPage = () => {
 
   const handleSubmitItem = async (formData) => {
   try {
+    // Format the date to include time in ISO format
+    const formatDateWithTime = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      // Set time to noon to avoid timezone issues
+      date.setHours(12, 0, 0, 0);
+      return date.toISOString();
+    };
+
     // Map frontend form fields to backend expected field names
     const itemData = {
       item_name: formData.item_name,
       description: formData.description,
       status: formData.status,
       location: formData.location,
-      date_occurred: formData.date_occurred,
+      date_occurred: formatDateWithTime(formData.date_occurred),
       category: formData.category,
       contact_info: formData.contact_info,
       image: formData.image?.[0] || null,

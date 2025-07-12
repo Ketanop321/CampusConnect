@@ -4,8 +4,16 @@ import { API_BASE_URL } from '../config';
 const API_URL = `${API_BASE_URL}/api/lostfound/items/`;
 
 // Get all lost and found items
-const getLostFoundItems = async () => {
-  const response = await axios.get(API_URL);
+const getLostFoundItems = async (token = null) => {
+  const config = {};
+  
+  if (token) {
+    config.headers = {
+      'Authorization': `Bearer ${token}`
+    };
+  }
+  
+  const response = await axios.get(API_URL, config);
   return response.data;
 };
 
@@ -39,10 +47,19 @@ const updateLostFoundItem = async (id, itemData, token) => {
     },
   };
 
+  // Format the date if it exists
+  const formattedData = { ...itemData };
+  if (formattedData.date_occurred) {
+    const date = new Date(formattedData.date_occurred);
+    // Set time to noon to avoid timezone issues
+    date.setHours(12, 0, 0, 0);
+    formattedData.date_occurred = date.toISOString();
+  }
+
   const formData = new FormData();
-  Object.keys(itemData).forEach((key) => {
-    if (itemData[key] !== null && itemData[key] !== undefined) {
-      formData.append(key, itemData[key]);
+  Object.keys(formattedData).forEach((key) => {
+    if (formattedData[key] !== null && formattedData[key] !== undefined) {
+      formData.append(key, formattedData[key]);
     }
   });
 
