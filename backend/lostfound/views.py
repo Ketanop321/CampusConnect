@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import LostFoundItem
@@ -12,6 +13,7 @@ class LostFoundItemViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'is_resolved', 'category']
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_serializer_class(self):
         if self.action in ['update', 'partial_update']:

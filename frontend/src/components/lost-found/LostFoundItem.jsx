@@ -1,52 +1,129 @@
 import { useState } from 'react';
-import { ClockIcon, MapPinIcon, UserIcon, TagIcon } from '@heroicons/react/24/outline';
+import { 
+  ClockIcon, 
+  MapPinIcon, 
+  UserIcon, 
+  TagIcon, 
+  PencilIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon
+} from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import Button from '../ui/Button';
+import { toast } from 'react-toastify';
 
-const LostFoundItem = ({ item, onClaim }) => {
+const LostFoundItem = ({ 
+  item, 
+  onClaim, 
+  onMarkAsFound, 
+  onEdit,
+  currentUserId,
+  isAdmin 
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isMarkingAsFound, setIsMarkingAsFound] = useState(false);
+  
+  const isOwner = item.reporter?.id === currentUserId;
 
   const statusColors = {
     lost: 'bg-red-100 text-red-800',
     found: 'bg-green-100 text-green-800',
-    claimed: 'bg-gray-100 text-gray-800',
+    claimed: 'bg-purple-100 text-purple-800',
+  };
+  
+  const statusIcons = {
+    lost: <ExclamationCircleIcon className="h-5 w-5 text-red-500" />,
+    found: <CheckCircleIcon className="h-5 w-5 text-green-500" />,
+    claimed: <CheckCircleIcon className="h-5 w-5 text-purple-500" />,
   };
 
   const handleClaim = async () => {
+    if (!currentUserId) {
+      toast.error('Please log in to claim this item');
+      return;
+    }
+    
     try {
       setIsClaiming(true);
       await onClaim(item.id);
+    } catch (error) {
+      console.error('Error claiming item:', error);
+      toast.error(error.message || 'Failed to claim item');
     } finally {
       setIsClaiming(false);
     }
   };
+  
+  const handleMarkAsFound = async () => {
+    try {
+      setIsMarkingAsFound(true);
+      await onMarkAsFound(item.id);
+    } catch (error) {
+      console.error('Error marking as found:', error);
+      toast.error(error.message || 'Failed to update status');
+    } finally {
+      setIsMarkingAsFound(false);
+    }
+  };
+  
+  const handleEdit = () => {
+    onEdit(item);
+  };
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="h-48 overflow-hidden">
+      <div className="h-48 overflow-hidden relative">
         <img
           src={item.image || 'https://via.placeholder.com/400x200?text=No+Image'}
-          alt={item.itemName}
+          alt={item.item_name || 'Lost and found item'}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
+          }}
         />
+        {(isOwner || isAdmin) && (
+          <div className="absolute top-2 right-2">
+            <button
+              onClick={handleEdit}
+              className="p-2 rounded-full bg-white bg-opacity-80 text-gray-700 hover:bg-opacity-100 transition-all"
+              title="Edit item"
+            >
+              <PencilIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="px-4 py-5 sm:p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">{item.itemName}</h3>
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              statusColors[item.status] || 'bg-gray-100 text-gray-800'
-            }`}
-          >
-            {item.status?.charAt(0).toUpperCase() + item.status?.slice(1)}
-          </span>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            {item.item_name}
+          </h3>
+          <div className="flex items-center space-x-2">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                statusColors[item.status] || 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {statusIcons[item.status]}
+              <span className="ml-1">
+                {item.status?.charAt(0).toUpperCase() + item.status?.slice(1)}
+              </span>
+            </span>
+            {item.claimed_by && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                <CheckCircleIcon className="h-3 w-3 mr-1" />
+                Claimed
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="mt-2 flex items-center text-sm text-gray-500">
           <TagIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-          {item.category || 'Uncategorized'}
+          <span className="capitalize">{item.category?.toLowerCase() || 'Uncategorized'}</span>
         </div>
         
         <div className="mt-2 flex items-start text-sm text-gray-500">
@@ -57,14 +134,22 @@ const LostFoundItem = ({ item, onClaim }) => {
         <div className="mt-2 flex items-center text-sm text-gray-500">
           <ClockIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
           <span>
-            {format(new Date(item.date || item.createdAt), 'MMM d, yyyy h:mm a')}
+            {format(new Date(item.date_occurred || item.created_at), 'MMM d, yyyy h:mm a')}
           </span>
         </div>
         
-        {item.contact && (
+        {item.contact_info && (
           <div className="mt-2 flex items-center text-sm text-gray-500">
             <UserIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-            <span className="truncate">Contact: {item.contact}</span>
+            <span className="truncate">Contact: {item.contact_info}</span>
+          </div>
+        )}
+        {item.reporter && (
+          <div className="mt-2 flex items-center text-sm text-gray-500">
+            <UserIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+            <span className="truncate">
+              Reported by: {item.reporter.first_name || item.reporter.email}
+            </span>
           </div>
         )}
         
@@ -85,8 +170,20 @@ const LostFoundItem = ({ item, onClaim }) => {
           )}
         </div>
         
-        <div className="mt-5 flex justify-end space-x-3">
-          {item.status === 'found' && (
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          {isOwner && item.status === 'lost' && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleMarkAsFound}
+              disabled={isMarkingAsFound}
+              className="text-sm"
+            >
+              {isMarkingAsFound ? 'Updating...' : 'Mark as Found'}
+            </Button>
+          )}
+          
+          {item.status === 'found' && !item.claimed_by && (
             <Button
               type="button"
               variant="outline"
@@ -94,9 +191,22 @@ const LostFoundItem = ({ item, onClaim }) => {
               disabled={isClaiming}
               className="text-sm"
             >
-              {isClaiming ? 'Claiming...' : 'Claim Item'}
+              {isClaiming ? 'Claiming...' : 'I Found This'}
             </Button>
           )}
+          
+          {(isOwner || isAdmin) && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleEdit}
+              className="text-sm"
+            >
+              <PencilIcon className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          )}
+          
           <Button
             type="button"
             variant="primary"

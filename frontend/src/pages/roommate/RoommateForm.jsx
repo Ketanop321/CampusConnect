@@ -158,7 +158,7 @@ const RoommateForm = ({ isEdit = false }) => {
         <p className="mt-1 text-sm text-gray-500">
           {isEdit 
             ? 'Update your roommate listing with the latest details.' 
-            : 'Fill out the form below to create a new roommate listing.'}
+            : 'Fill out the form below to create a new roommate listing.'
           }
         </p>
       </div>

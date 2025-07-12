@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from .models import LostFoundItem
 from accounts.serializers import UserSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class LostFoundItemSerializer(serializers.ModelSerializer):
     reporter = UserSerializer(read_only=True)
     claimed_by = UserSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    image = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = LostFoundItem
@@ -33,6 +35,8 @@ class LostFoundItemSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class LostFoundItemUpdateSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False, allow_null=True)
+    
     class Meta:
         model = LostFoundItem
         fields = [

@@ -1,73 +1,93 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LostFoundItem from '../../components/lost-found/LostFoundItem';
 import LostFoundForm from '../../components/lost-found/LostFoundForm';
 import Button from '../../components/ui/Button';
-import { useQuery } from '@tanstack/react-query';
+import lostFoundService from '../../services/lostFoundService';
+import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
-// Mock data - replace with actual API calls
-const mockItems = [
-  {
-    id: '1',
-    itemName: 'Black Backpack',
-    description: 'Nike black backpack with a laptop compartment',
-    location: 'Library, 2nd floor',
-    date: '2023-06-15T10:30:00Z',
-    status: 'found',
-    category: 'Bags',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
-    contact: 'john@example.com',
-    createdAt: '2023-06-15T10:35:00Z',
-  },
-  {
-    id: '2',
-    itemName: 'Silver Water Bottle',
-    description: 'Hydro Flask 32oz, silver color with some stickers',
-    location: 'Student Center, near Starbucks',
-    date: '2023-06-16T14:15:00Z',
-    status: 'lost',
-    category: 'Personal Items',
-    image: 'https://images.unsplash.com/photo-1602143407151-a6214b1cc5f2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80',
-    contact: 'sarah@example.com',
-    createdAt: '2023-06-16T15:30:00Z',
-  },
-  {
-    id: '3',
-    itemName: 'Wireless Earbuds',
-    description: 'Apple AirPods Pro with case',
-    location: 'Engineering Building, Room 205',
-    date: '2023-06-17T09:45:00Z',
-    status: 'found',
-    category: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1738&q=80',
-    contact: 'lostandfound@campus.edu',
-    createdAt: '2023-06-17T10:15:00Z',
-  },
-];
-
-const fetchLostFoundItems = async () => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockItems);
-    }, 500);
-  });
+// Helper function to format date for input field
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0];
 };
 
 const LostAndFoundPage = () => {
+  const { user, token } = useAuth();
+  const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  const { data: items = [], isLoading } = useQuery({
+  // Fetch all lost and found items
+  const { data: itemsData, isLoading, error } = useQuery({
     queryKey: ['lostFoundItems'],
-    queryFn: fetchLostFoundItems,
+    queryFn: lostFoundService.getLostFoundItems,
+  });
+  
+  // Ensure items is always an array
+  const items = Array.isArray(itemsData) ? itemsData : [];
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (itemData) => lostFoundService.createLostFoundItem(itemData, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lostFoundItems']);
+      toast.success('Item created successfully');
+      setIsFormOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to create item');
+    },
   });
 
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...data }) => lostFoundService.updateLostFoundItem(id, data, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lostFoundItems']);
+      toast.success('Item updated successfully');
+      setIsFormOpen(false);
+      setEditingItem(null);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to update item');
+    },
+  });
+
+  // Claim mutation
+  const claimMutation = useMutation({
+    mutationFn: (id) => lostFoundService.claimItem(id, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lostFoundItems']);
+      toast.success('Item claimed successfully');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to claim item');
+    },
+  });
+
+  // Mark as found mutation
+  const markAsFoundMutation = useMutation({
+    mutationFn: (id) => lostFoundService.markAsFound(id, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lostFoundItems']);
+      toast.success('Item marked as found');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to update item status');
+    },
+  });
+
+  // Filter items based on search and filters
   const filteredItems = items.filter((item) => {
-    const matchesSearch = item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
@@ -75,21 +95,66 @@ const LostAndFoundPage = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleSubmitItem = (newItem) => {
-    console.log('New item submitted:', newItem);
-    // In a real app, you would add the item to the database here
-    setIsFormOpen(false);
+  const handleSubmitItem = async (formData) => {
+  try {
+    // Map frontend form fields to backend expected field names
+    const itemData = {
+      item_name: formData.item_name,
+      description: formData.description,
+      status: formData.status,
+      location: formData.location,
+      date_occurred: formData.date_occurred,
+      category: formData.category,
+      contact_info: formData.contact_info,
+      image: formData.image?.[0] || null,
+    };
+
+    if (editingItem) {
+      await updateMutation.mutateAsync({ id: editingItem.id, ...itemData });
+    } else {
+      await createMutation.mutateAsync(itemData);
+    }
+  } catch (error) {
+    console.error('Error submitting item:', error);
+    toast.error(
+      error?.response?.data?.detail || error?.message || 'Failed to submit item. Please try again.'
+    );
+  }
+};
+
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setIsFormOpen(true);
   };
 
-  const handleClaimItem = (itemId) => {
-    console.log('Item claimed:', itemId);
-    // In a real app, you would update the item status in the database here
+  const handleClaimItem = async (itemId) => {
+    try {
+      await claimMutation.mutateAsync(itemId);
+    } catch (error) {
+      console.error('Error claiming item:', error);
+    }
+  };
+
+  const handleMarkAsFound = async (itemId) => {
+    try {
+      await markAsFoundMutation.mutateAsync(itemId);
+    } catch (error) {
+      console.error('Error marking item as found:', error);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Error loading lost and found items. Please try again later.</p>
       </div>
     );
   }
@@ -188,6 +253,10 @@ const LostAndFoundPage = () => {
               key={item.id}
               item={item}
               onClaim={handleClaimItem}
+              onMarkAsFound={handleMarkAsFound}
+              onEdit={handleEditItem}
+              currentUserId={user?.id}
+              isAdmin={user?.is_staff}
             />
           ))}
         </div>
@@ -230,8 +299,21 @@ const LostAndFoundPage = () => {
       {/* Report Item Form Modal */}
       <LostFoundForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingItem(null);
+        }}
         onSubmit={handleSubmitItem}
+        initialData={editingItem ? {
+          item_name: editingItem.item_name,
+          status: editingItem.status,
+          category: editingItem.category,
+          location: editingItem.location,
+          date_occurred: formatDateForInput(editingItem.date_occurred),
+          description: editingItem.description,
+          contact_info: editingItem.contact_info,
+        } : undefined}
+        isSubmitting={createMutation.isLoading || updateMutation.isLoading}
       />
     </div>
   );

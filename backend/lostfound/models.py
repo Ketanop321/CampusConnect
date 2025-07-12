@@ -26,7 +26,7 @@ class LostFoundItem(models.Model):
         related_name='claimed_items'
     )
     is_resolved = models.BooleanField(default=False)
-    image = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='lostfound/', blank=True, null=True)
     contact_info = models.CharField(max_length=200, blank=True, null=True)
     category = models.CharField(max_length=50, blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
