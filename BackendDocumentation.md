@@ -242,12 +242,6 @@ This section explains how data is handled in the CampusConnect backend—from re
 python manage.py test
 ```
 
-### Test Coverage
-```bash
-coverage run --source='.' manage.py test
-coverage report
-```
-
 ### Environment Variables
 ```
 DEBUG=False
@@ -256,18 +250,6 @@ ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 DATABASE_URL=postgres://user:password@localhost:5432/dbname
 ```
 
-## 🐛 Troubleshooting
-
-### Common Issues
-1. **Migrations not applying**
-   ```bash
-   python manage.py migrate --fake-initial
-   ```
-
-2. **Static files not loading**
-   ```bash
-   python manage.py collectstatic
-   ```
 
 3. **Port already in use**
    ```bash
