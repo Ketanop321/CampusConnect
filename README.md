@@ -59,30 +59,23 @@ A comprehensive campus management platform built with Django and Django REST Fra
    pip install -r requirements.txt
    ```
 
-3. **Set up environment variables**
-   Create a `.env` file in the project root and add:
-   ```
-   SECRET_KEY=your-secret-key-here
-   DEBUG=True
-   ```
-
-4. **Apply migrations**
+3. **Apply migrations**
    ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
 
-5. **Create superuser**
+4. **Create superuser**
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Run the development server**
+5. **Run the development server**
    ```bash
    python manage.py runserver
    ```
 
-7. **Access the application**
+6. **Access the application**
    - API: http://127.0.0.1:8000/api/
    - Admin: http://127.0.0.1:8000/admin/
 
