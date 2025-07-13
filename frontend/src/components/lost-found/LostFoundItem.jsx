@@ -6,11 +6,12 @@ import {
   TagIcon, 
   PencilIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import Button from '../ui/Button';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 const LostFoundItem = ({ 
   item, 
@@ -23,6 +24,8 @@ const LostFoundItem = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isMarkingAsFound, setIsMarkingAsFound] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   
   const isOwner = item.reporter?.id === currentUserId;
 
@@ -71,24 +74,52 @@ const LostFoundItem = ({
     onEdit(item);
   };
 
+  // Format the image URL to use the correct backend URL if it's a relative path
+  const getImageUrl = () => {
+    if (!item.image) return null;
+    if (item.image.startsWith('http')) return item.image;
+    return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}${item.image}`;
+  };
+
+  const imageUrl = getImageUrl();
+
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="h-48 overflow-hidden relative">
-        <img
-          src={item.image || 'https://via.placeholder.com/400x200?text=No+Image'}
-          alt={item.item_name || 'Lost and found item'}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
-          }}
-        />
+    <div className="bg-white overflow-hidden shadow rounded-lg h-full flex flex-col">
+      <div className="h-48 overflow-hidden relative bg-gray-100">
+        {imageLoading && imageUrl && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-pulse bg-gray-200 w-full h-full" />
+          </div>
+        )}
+        
+        {!imageError && imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.item_name || 'Lost and found item'}
+            className={`w-full h-full object-cover transition-transform duration-300 ${
+              isExpanded ? 'scale-105' : 'hover:scale-105'
+            }`}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-400">
+            <PhotoIcon className="h-12 w-12" />
+          </div>
+        )}
+        
         {(isOwner || isAdmin) && (
           <div className="absolute top-2 right-2">
             <button
               onClick={handleEdit}
-              className="p-2 rounded-full bg-white bg-opacity-80 text-gray-700 hover:bg-opacity-100 transition-all"
+              className="p-2 rounded-full bg-white/80 text-gray-700 hover:bg-white transition-all shadow-sm"
               title="Edit item"
+              aria-label="Edit item"
             >
               <PencilIcon className="h-4 w-4" />
             </button>

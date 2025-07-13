@@ -127,15 +127,82 @@ export const login = async (email, password) => {
   }
 };
 
+/**
+ * Register a new user
+ * @param {Object} userData - User registration data
+ * @param {string} userData.email - User's email
+ * @param {string} userData.name - User's full name
+ * @param {string} userData.mobile - User's mobile number
+ * @param {string} userData.password - User's password
+ * @param {string} userData.password2 - Password confirmation
+ * @param {string} userData.address - User's address
+ * @returns {Promise<Object>} - Registration response
+ */
 export const register = async (userData) => {
   try {
     console.log('Registering user with data:', userData);
-    const response = await apiRequest('/accounts/register/', 'POST', userData);
-    console.log('Registration response:', response);
+    
+    // Validate required fields
+    const requiredFields = ['email', 'name', 'mobile', 'password', 'password2', 'address'];
+    const missingFields = requiredFields.filter(field => !userData[field]);
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+    
+    if (userData.password !== userData.password2) {
+      throw new Error('Passwords do not match');
+    }
+    
+    const response = await apiRequest('/accounts/register/', 'POST', {
+      email: userData.email,
+      name: userData.name,
+      mobile: userData.mobile,
+      password: userData.password,
+      password2: userData.password2,
+      address: userData.address,
+    });
+    
+    console.log('Registration successful:', response);
     return response;
   } catch (error) {
     console.error('Registration failed:', error);
-    throw error; // Re-throw to be handled by the component
+    
+    // Handle specific error cases
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      const { status, data } = error.response;
+      
+      if (status === 400) {
+        // Handle validation errors
+        const errorMessages = [];
+        for (const [field, errors] of Object.entries(data)) {
+          if (Array.isArray(errors)) {
+            errorMessages.push(`${field}: ${errors.join(', ')}`);
+          } else if (typeof errors === 'string') {
+            errorMessages.push(`${field}: ${errors}`);
+          } else if (typeof errors === 'object') {
+            for (const [subField, subErrors] of Object.entries(errors)) {
+              if (Array.isArray(subErrors)) {
+                errorMessages.push(`${field}.${subField}: ${subErrors.join(', ')}`);
+              } else {
+                errorMessages.push(`${field}.${subField}: ${subErrors}`);
+              }
+            }
+          }
+        }
+        throw new Error(errorMessages.join('\n') || 'Validation failed');
+      } else if (status === 500) {
+        throw new Error('Server error. Please try again later.');
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      throw new Error('No response from server. Please check your connection.');
+    }
+    
+    // Something happened in setting up the request that triggered an Error
+    throw error;
   }
 };
 

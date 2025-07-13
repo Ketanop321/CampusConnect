@@ -5,16 +5,33 @@ const API_URL = `${API_BASE_URL}/api/lostfound/items/`;
 
 // Get all lost and found items
 const getLostFoundItems = async (token = null) => {
-  const config = {};
-  
-  if (token) {
-    config.headers = {
-      'Authorization': `Bearer ${token}`
-    };
+  try {
+    const config = {};
+    
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    }
+    
+    console.log('Fetching items from:', API_URL);
+    const response = await axios.get(API_URL, config);
+    
+    // Handle different response formats
+    const items = response.data.results || response.data || [];
+    console.log('Received items:', items);
+    
+    return Array.isArray(items) ? items : [];
+  } catch (error) {
+    console.error('Error fetching lost and found items:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: error.config?.url
+    });
+    throw error;
   }
-  
-  const response = await axios.get(API_URL, config);
-  return response.data;
 };
 
 // Create a new lost/found item

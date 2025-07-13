@@ -11,7 +11,9 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
 
         # Write permissions are only allowed to the owner of the object.
-        return obj == request.user or request.user.is_staff
+        # Check if the object has a 'reporter' attribute and if it matches the request user
+        # or if the user is staff/admin
+        return (hasattr(obj, 'reporter') and obj.reporter == request.user) or request.user.is_staff
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
