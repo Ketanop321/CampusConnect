@@ -27,3 +27,5 @@ dist-ssr
 .env.example
 media/lostfound/
 media/*
+backend/*.sqlite3
+frontend/node_modules/
