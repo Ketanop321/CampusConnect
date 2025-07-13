@@ -58,6 +58,17 @@ A comprehensive campus management platform built with Django and Django REST Fra
    ```bash
    pip install -r requirements.txt
    ```
+   (Alternative for above). **IF Above command doesn't work and give error | Put the below command respectively to terminal Error** 
+   ```bash
+   pip install django-cors-headers
+    ```
+   ```bash
+   pip install djangorestframework-simplejwt
+   ```
+    ```bash
+   pip install django-filter==25.1
+t
+   ```
 
 3. **Apply migrations**
    ```bash
