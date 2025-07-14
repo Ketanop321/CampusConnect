@@ -235,22 +235,6 @@ This section explains how data is handled in the CampusConnect backend—from re
    ```
 4. Create a pull request
 
-## 🧪 Testing
-
-### Running Tests
-```bash
-python manage.py test
-```
-
-### Environment Variables
-```
-DEBUG=False
-SECRET_KEY=your-production-secret-key
-ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
-DATABASE_URL=postgres://user:password@localhost:5432/dbname
-```
-
-
 3. **Port already in use**
    ```bash
    # Find the process
