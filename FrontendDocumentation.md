@@ -122,6 +122,10 @@ frontend/
    ```sh
    npm install
    ```
+   **If above command doesn't works
+   ```sh
+   npm install --force
+   ```
 
    Agar npm install kaam na kre to npm install --force use krna
 3. **Start the development server**
