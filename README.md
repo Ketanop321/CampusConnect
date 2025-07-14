@@ -1,3 +1,7 @@
+<p align="center">
+   <img src="https://cimage.in/content/themes/qeducato/inc/assets/images/logoc.png"/>
+</p>
+
 # CampusConnect Platform
 
 A comprehensive campus management platform built with Django and Django REST Framework, designed to facilitate various campus activities and services.
