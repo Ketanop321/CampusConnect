@@ -1,27 +1,13 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config';
+import api from './api';
 
-const API_URL = `${API_BASE_URL}/api/lostfound/items/`;
+const API_URL = '/api/lostfound/items/';
 
 // Get all lost and found items
-const getLostFoundItems = async (token = null) => {
+export const getLostFoundItems = async () => {
   try {
-    const config = {};
-    
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`
-      };
-    }
-    
-    console.log('Fetching items from:', API_URL);
-    const response = await axios.get(API_URL, config);
-    
+    const response = await api.get(API_URL);
     // Handle different response formats
     const items = response.data.results || response.data || [];
-    console.log('Received items:', items);
-    
     return Array.isArray(items) ? items : [];
   } catch (error) {
     console.error('Error fetching lost and found items:', {
@@ -35,15 +21,7 @@ const getLostFoundItems = async (token = null) => {
 };
 
 // Create a new lost/found item
-const createLostFoundItem = async (itemData, token) => {
-  const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  // Convert the item data to FormData to handle file upload
+export const createLostFoundItem = async (itemData) => {
   const formData = new FormData();
   Object.keys(itemData).forEach((key) => {
     if (itemData[key] !== null && itemData[key] !== undefined) {
@@ -51,20 +29,17 @@ const createLostFoundItem = async (itemData, token) => {
     }
   });
 
-  const response = await axios.post(API_URL, formData, config);
+  const response = await api.post(API_URL, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
 // Update a lost/found item
-const updateLostFoundItem = async (id, itemData, token) => {
-  const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  // Format the date if it exists
+export const updateLostFoundItem = async (id, itemData) => {
+  // Format the date to ensure it's in the correct format
   const formattedData = { ...itemData };
   if (formattedData.date_occurred) {
     const date = new Date(formattedData.date_occurred);
@@ -80,47 +55,34 @@ const updateLostFoundItem = async (id, itemData, token) => {
     }
   });
 
-  const response = await axios.patch(`${API_URL}${id}/`, formData, config);
+  const response = await api.patch(`${API_URL}/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
 // Delete a lost/found item
-const deleteLostFoundItem = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.delete(`${API_URL}${id}/`, config);
+export const deleteLostFoundItem = async (id) => {
+  const response = await api.delete(`${API_URL}/${id}/`);
   return response.data;
 };
 
 // Claim an item
-const claimItem = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.post(`${API_URL}${id}/claim/`, {}, config);
+export const claimItem = async (id) => {
+  const response = await api.post(`${API_URL}/${id}/claim/`, {});
   return response.data;
 };
 
 // Mark item as found
-const markAsFound = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.post(`${API_URL}${id}/mark_found/`, {}, config);
+export const markAsFound = async (id) => {
+  const response = await api.post(`${API_URL}/${id}/mark_found/`, {});
   return response.data;
 };
 
-const lostFoundService = {
+// Export all functions individually for named imports
+export default {
   getLostFoundItems,
   createLostFoundItem,
   updateLostFoundItem,
@@ -128,5 +90,3 @@ const lostFoundService = {
   claimItem,
   markAsFound,
 };
-
-export default lostFoundService;

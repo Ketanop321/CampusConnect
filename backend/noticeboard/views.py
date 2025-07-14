@@ -9,7 +9,7 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(organizer=self.request.user)
 
 class EventCommentViewSet(viewsets.ModelViewSet):
     queryset = EventComment.objects.all()
