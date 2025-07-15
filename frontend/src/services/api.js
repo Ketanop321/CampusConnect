@@ -1,3 +1,7 @@
+//api.js is used to create a base axios instance with common configurations
+// It is used to handle authentication and error handling
+
+
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
@@ -7,13 +11,23 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+//Isse ek custom axios instance banta hai
+//Har request mein baseURL already added hota hai
+
+
+
+
+
 
 // Add a request interceptor
+//Har request se pehle, ye interceptor chalta hai.
+//localStorage se access_token uthake Authorization header mein laga deta hai.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      //headers ke andar Authorization key add karo with Bearer <token> value.
     }
     return config;
   },
@@ -21,6 +35,9 @@ api.interceptors.request.use(
 );
 
 // Add a response interceptor for error handling
+// Agar 401 aaya to pehle check karega refresh_token
+// Agar wo mil gaya to POST /auth/token/refresh/ pe token refresh karega
+// Naya access token set karke automatically same request ko retry karega
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

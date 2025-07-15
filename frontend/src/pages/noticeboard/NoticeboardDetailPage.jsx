@@ -38,12 +38,19 @@ const NoticeboardDetailPage = () => {
     const fetchEventAndComments = async () => {
       try {
         setLoading(true);
-        const [eventData, commentsData] = await Promise.all([
-          getEvent(id),
-          getEventComments(id)
-        ]);
+        
+        // First fetch the event
+        const eventData = await getEvent(id);
         setEvent(eventData);
-        setComments(commentsData);
+        
+        // Then try to fetch comments, but don't fail if it doesn't work
+        try {
+          const commentsData = await getEventComments(id);
+          setComments(commentsData);
+        } catch (commentErr) {
+          console.warn('Could not load comments:', commentErr);
+          setComments([]);
+        }
       } catch (err) {
         setError('Failed to load event. Please try again.');
         console.error('Error fetching event:', err);

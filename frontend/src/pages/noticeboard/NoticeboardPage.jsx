@@ -25,6 +25,8 @@ const NoticeboardPage = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Prepare query parameters
       const params = {};
       if (filters.search) params.search = filters.search;
       if (filters.event_type) params.event_type = filters.event_type;
@@ -32,8 +34,19 @@ const NoticeboardPage = () => {
       if (filters.date_range === 'past') params.is_past = true;
       if (filters.is_online !== '') params.is_online = filters.is_online === 'true';
       
-      const data = await getEvents(params);
-      setEvents(Array.isArray(data) ? data : []);
+      console.log('Fetching events with params:', params);
+      
+      // The getEvents function now handles the response format
+      const eventsData = await getEvents(params);
+      
+      if (!Array.isArray(eventsData)) {
+        console.error('Expected an array of events but got:', eventsData);
+        setEvents([]);
+        return;
+      }
+      
+      console.log('Successfully fetched', eventsData.length, 'events');
+      setEvents(eventsData);
     } catch (err) {
       console.error('Error fetching events:', err);
       setError('Failed to load events. Please try again later.');
@@ -91,6 +104,7 @@ const NoticeboardPage = () => {
     );
   }
 
+  console.log('Filtering events. Total events:', events?.length || 0);
   const filteredEvents = (Array.isArray(events) ? events : []).filter(event => {
     if (!event) return false;
     
