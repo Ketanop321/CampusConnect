@@ -1,6 +1,6 @@
 import api from './api';
 
-const API_URL = '/api/noticeboard/events'; // Remove trailing slash to prevent double slashes
+const API_URL = '/api/noticeboard/events/'; // Include trailing slash for Django compatibility
 
 export const getEvents = async (params = {}) => {
   try {
@@ -42,7 +42,9 @@ export const getEvents = async (params = {}) => {
 };
 
 export const getEvent = async (id) => {
-  const response = await api.get(`${API_URL}/${id}/`);
+  // Remove any leading/trailing slashes from the ID to prevent double slashes
+  const cleanId = id.replace(/^\/+|\/+$/g, '');
+  const response = await api.get(`${API_URL}${cleanId}/`);
   return response.data;
 };
 
@@ -64,24 +66,27 @@ export const createEvent = async (eventData) => {
 };
 
 export const updateEvent = async (id, eventData) => {
-  const response = await api.put(`${API_URL}/${id}/`, eventData);
+  const cleanId = id.replace(/^\/+|\/+$/g, '');
+  const response = await api.put(`${API_URL}${cleanId}/`, eventData);
   return response.data;
 };
 
 export const deleteEvent = async (id) => {
-  const response = await api.delete(`${API_URL}/${id}/`);
+  const cleanId = id.replace(/^\/+|\/+$/g, '');
+  const response = await api.delete(`${API_URL}${cleanId}/`);
   return response.data;
 };
 
 export const registerForEvent = async (eventId) => {
-  const response = await api.post(`${API_URL}/${eventId}/register/`);
+  const cleanId = eventId.replace(/^\/+|\/+$/g, '');
+  const response = await api.post(`${API_URL}${cleanId}/register/`);
   return response.data;
 };
 
 export const getEventComments = async (eventId) => {
   try {
-    // Use the correct URL structure for DRF nested routes
-    const response = await api.get(`${API_URL}/${eventId}/comments/`);
+    const cleanId = eventId.replace(/^\/+|\/+$/g, '');
+    const response = await api.get(`${API_URL}${cleanId}/comments/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching comments:', error);
@@ -91,6 +96,7 @@ export const getEventComments = async (eventId) => {
 };
 
 export const addEventComment = async (eventId, commentData) => {
-  const response = await api.post(`${API_URL}/${eventId}/comments/`, commentData);
+  const cleanId = eventId.replace(/^\/+|\/+$/g, '');
+  const response = await api.post(`${API_URL}${cleanId}/comments/`, commentData);
   return response.data;
 };
