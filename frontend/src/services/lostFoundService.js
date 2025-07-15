@@ -1,13 +1,27 @@
-import api from './api';
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-const API_URL = '/api/lostfound/items/';
+const API_URL = `${API_BASE_URL}/api/lostfound/items/`;
 
 // Get all lost and found items
-export const getLostFoundItems = async () => {
+const getLostFoundItems = async (token = null) => {
   try {
-    const response = await api.get(API_URL);
+    const config = {};
+    
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    }
+    
+    console.log('Fetching items from:', API_URL);
+    const response = await axios.get(API_URL, config);
+    
     // Handle different response formats
     const items = response.data.results || response.data || [];
+    console.log('Received items:', items);
+    
     return Array.isArray(items) ? items : [];
   } catch (error) {
     console.error('Error fetching lost and found items:', {
@@ -21,7 +35,15 @@ export const getLostFoundItems = async () => {
 };
 
 // Create a new lost/found item
-export const createLostFoundItem = async (itemData) => {
+const createLostFoundItem = async (itemData, token) => {
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  // Convert the item data to FormData to handle file upload
   const formData = new FormData();
   Object.keys(itemData).forEach((key) => {
     if (itemData[key] !== null && itemData[key] !== undefined) {
@@ -29,17 +51,20 @@ export const createLostFoundItem = async (itemData) => {
     }
   });
 
-  const response = await api.post(API_URL, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await axios.post(API_URL, formData, config);
   return response.data;
 };
 
 // Update a lost/found item
-export const updateLostFoundItem = async (id, itemData) => {
-  // Format the date to ensure it's in the correct format
+const updateLostFoundItem = async (id, itemData, token) => {
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  // Format the date if it exists
   const formattedData = { ...itemData };
   if (formattedData.date_occurred) {
     const date = new Date(formattedData.date_occurred);
@@ -55,34 +80,47 @@ export const updateLostFoundItem = async (id, itemData) => {
     }
   });
 
-  const response = await api.patch(`${API_URL}/${id}/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await axios.patch(`${API_URL}${id}/`, formData, config);
   return response.data;
 };
 
 // Delete a lost/found item
-export const deleteLostFoundItem = async (id) => {
-  const response = await api.delete(`${API_URL}/${id}/`);
+const deleteLostFoundItem = async (id, token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  const response = await axios.delete(`${API_URL}${id}/`, config);
   return response.data;
 };
 
 // Claim an item
-export const claimItem = async (id) => {
-  const response = await api.post(`${API_URL}/${id}/claim/`, {});
+const claimItem = async (id, token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  const response = await axios.post(`${API_URL}${id}/claim/`, {}, config);
   return response.data;
 };
 
 // Mark item as found
-export const markAsFound = async (id) => {
-  const response = await api.post(`${API_URL}/${id}/mark_found/`, {});
+const markAsFound = async (id, token) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  const response = await axios.post(`${API_URL}${id}/mark_found/`, {}, config);
   return response.data;
 };
 
-// Export all functions individually for named imports
-export default {
+const lostFoundService = {
   getLostFoundItems,
   createLostFoundItem,
   updateLostFoundItem,
@@ -90,3 +128,5 @@ export default {
   claimItem,
   markAsFound,
 };
+
+export default lostFoundService;
