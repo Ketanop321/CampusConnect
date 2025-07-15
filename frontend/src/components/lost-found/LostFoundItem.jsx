@@ -243,8 +243,7 @@ const LostFoundItem = ({
             variant="primary"
             className="text-sm"
             onClick={() => {
-              // In a real app, this would navigate to a detail view
-              console.log('View details for item:', item.id);
+              window.location.href = `/lost-found/${item.id}`;
             }}
           >
             View Details

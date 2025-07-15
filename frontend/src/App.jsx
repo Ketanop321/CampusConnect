@@ -12,6 +12,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LostAndFoundPage from './pages/lost-found/LostAndFoundPage';
+import LostFoundDetailPage from './pages/lost-found/LostFoundDetailPage';
 import BookBankPage from './pages/book-bank/BookBankPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -72,7 +73,11 @@ function App() {
             }
           >
             <Route index element={<HomePage />} />
-            <Route path="lost-found" element={<LostAndFoundPage />} />
+            {/* Lost & Found Routes */}
+            <Route path="lost-found">
+              <Route index element={<LostAndFoundPage />} />
+              <Route path=":id" element={<LostFoundDetailPage />} />
+            </Route>
             <Route path="book-bank" element={<BookBankPage />} />
             <Route path="profile" element={<ProfilePage />} />
             

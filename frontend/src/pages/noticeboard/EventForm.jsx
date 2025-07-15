@@ -32,7 +32,7 @@ const EventForm = ({ isEdit = false }) => {
     price: '0.00',
     registration_required: false,
     registration_deadline: '',
-    images: [] // This will store both File objects and existing image objects
+    images: []
   });
 
   useEffect(() => {
@@ -83,32 +83,23 @@ const EventForm = ({ isEdit = false }) => {
   };
 
   const handleImageChange = (e) => {
+    // In a real app, you would upload images to a storage service
+    // and get back URLs to save in your database
     const files = Array.from(e.target.files);
-    
-    // Create preview URLs and keep File objects
     const newImages = files.map(file => ({
-      id: URL.createObjectURL(file), // For preview
-      file: file, // Keep the actual File object
-      image: URL.createObjectURL(file), // For preview
-      is_primary: false,
-      isNew: true // Flag to identify new uploads
+      id: URL.createObjectURL(file),
+      image: URL.createObjectURL(file),
+      is_primary: false
     }));
     
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, ...newImages]
     }));
-    
-    // Clear the file input to allow selecting the same file again if needed
-    e.target.value = null;
   };
 
   const removeImage = (index) => {
     const newImages = [...formData.images];
-    // Revoke the object URL to prevent memory leaks
-    if (newImages[index]?.id?.startsWith('blob:')) {
-      URL.revokeObjectURL(newImages[index].id);
-    }
     newImages.splice(index, 1);
     setFormData(prev => ({
       ...prev,
@@ -180,52 +171,22 @@ const EventForm = ({ isEdit = false }) => {
     try {
       setSubmitting(true);
       
-      // Prepare FormData for file upload
-      const formDataToSubmit = new FormData();
-      
-      // Add all form fields to FormData
-      Object.keys(formData).forEach(key => {
-        // Skip images for now, we'll handle them separately
-        if (key === 'images') return;
-        
-        const value = formData[key];
-        if (value !== null && value !== undefined) {
-          formDataToSubmit.append(key, value);
-        }
-      });
-      
-      // Add images to FormData
-      if (formData.images && formData.images.length > 0) {
-        formData.images.forEach((img, index) => {
-          if (img.file) {
-            // For new file uploads
-            formDataToSubmit.append('images', img.file);
-          } else if (img.id) {
-            // For existing images, just send the ID
-            formDataToSubmit.append('existing_images', img.id);
-          }
-        });
-      }
-      
-      // Add other fields that need special handling
-      formDataToSubmit.append('max_participants', formData.max_participants || '');
-      formDataToSubmit.append('price', formData.is_free ? '0' : formData.price.toString());
-      formDataToSubmit.append('registration_deadline', 
-        formData.registration_required ? formData.registration_deadline : ''
-      );
+      // Prepare the data for submission
+      const submissionData = {
+        ...formData,
+        // Convert empty strings to null for optional fields
+        max_participants: formData.max_participants || null,
+        price: formData.is_free ? 0 : parseFloat(formData.price),
+        registration_deadline: formData.registration_required 
+          ? formData.registration_deadline 
+          : null
+      };
       
       if (isEdit) {
-        await updateEvent(id, formDataToSubmit);
+        await updateEvent(id, submissionData);
       } else {
-        await createEvent(formDataToSubmit);
+        await createEvent(submissionData);
       }
-      
-      // Clean up object URLs
-      formData.images.forEach(img => {
-        if (img.id?.startsWith('blob:')) {
-          URL.revokeObjectURL(img.id);
-        }
-      });
       
       navigate('/noticeboard');
     } catch (err) {

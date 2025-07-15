@@ -120,8 +120,34 @@ const markAsFound = async (id, token) => {
   return response.data;
 };
 
+// Get a single lost/found item by ID
+const getLostFoundItem = async (id, token = null) => {
+  try {
+    const config = {};
+    
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    }
+    
+    const response = await axios.get(`${API_URL}${id}/`, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching lost and found item:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: error.config?.url
+    });
+    throw error;
+  }
+};
+
 const lostFoundService = {
   getLostFoundItems,
+  getLostFoundItem,
   createLostFoundItem,
   updateLostFoundItem,
   deleteLostFoundItem,

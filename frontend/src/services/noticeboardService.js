@@ -49,31 +49,13 @@ export const getEvent = async (id) => {
 };
 
 export const createEvent = async (eventData) => {
+  // Handle file uploads if needed
   const formData = new FormData();
-  
-  // Handle regular fields
   Object.keys(eventData).forEach(key => {
-    // Skip images array as we'll handle it separately
-    if (key === 'images') return;
-    
     if (eventData[key] !== null && eventData[key] !== undefined) {
       formData.append(key, eventData[key]);
     }
   });
-  
-  // Handle image files
-  if (eventData.images && eventData.images.length > 0) {
-    eventData.images.forEach((img, index) => {
-      // If it's a File object (new upload)
-      if (img instanceof File) {
-        formData.append(`images`, img);
-      } 
-      // If it's an object with file data (existing image)
-      else if (img.image && typeof img.image === 'string') {
-        formData.append(`existing_images`, JSON.stringify(img));
-      }
-    });
-  }
   
   const response = await api.post(API_URL, formData, {
     headers: {
@@ -85,37 +67,7 @@ export const createEvent = async (eventData) => {
 
 export const updateEvent = async (id, eventData) => {
   const cleanId = id.replace(/^\/+|\/+$/g, '');
-  const formData = new FormData();
-  
-  // Handle regular fields
-  Object.keys(eventData).forEach(key => {
-    // Skip images array as we'll handle it separately
-    if (key === 'images') return;
-    
-    if (eventData[key] !== null && eventData[key] !== undefined) {
-      formData.append(key, eventData[key]);
-    }
-  });
-  
-  // Handle image files
-  if (eventData.images && eventData.images.length > 0) {
-    eventData.images.forEach((img, index) => {
-      // If it's a File object (new upload)
-      if (img instanceof File) {
-        formData.append(`images`, img);
-      } 
-      // If it's an object with file data (existing image)
-      else if (img.image && typeof img.image === 'string') {
-        formData.append(`existing_images`, JSON.stringify(img));
-      }
-    });
-  }
-  
-  const response = await api.put(`${API_URL}${cleanId}/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await api.put(`${API_URL}${cleanId}/`, eventData);
   return response.data;
 };
 
