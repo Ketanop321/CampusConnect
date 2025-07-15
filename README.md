@@ -94,28 +94,6 @@ t
    - API: http://127.0.0.1:8000/api/
    - Admin: http://127.0.0.1:8000/admin/
 
-## 📚 API Documentation
-
-### Authentication
-- `POST /api/token/` - Obtain JWT token (login)
-- `POST /api/token/refresh/` - Refresh JWT token
-- `POST /api/token/verify/` - Verify JWT token
-
-### User Management
-- `POST /api/accounts/register/` - Register new user
-- `GET /api/accounts/profile/` - Get user profile
-- `PATCH /api/accounts/profile/` - Update profile
-- `POST /api/accounts/change-password/` - Change password
-
-### Lost & Found
-- `GET /api/lostfound/items/` - List all items
-- `POST /api/lostfound/items/` - Create new item
-- `GET /api/lostfound/items/{id}/` - Get item details
-- `PATCH /api/lostfound/items/{id}/` - Update item
-- `DELETE /api/lostfound/items/{id}/` - Delete item
-- `POST /api/lostfound/items/{id}/mark_found/` - Mark item as found
-- `POST /api/lostfound/items/{id}/claim/` - Claim an item
-- `POST /api/lostfound/items/{id}/unclaim/` - Unclaim an item
 
 ## 🏗️ Project Structure
 
