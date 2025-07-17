@@ -13,5 +13,12 @@ class RoommatePostSerializer(serializers.ModelSerializer):
     images = RoommateImageSerializer(many=True, read_only=True)
     class Meta:
         model = RoommatePost
-        fields = ['id', 'user', 'title', 'description', 'location', 'rent', 'gender_preference', 'occupation_preference', 'contact_email', 'is_active', 'created_at', 'updated_at', 'images']
+        fields = [
+            'id', 'user', 'title', 'description', 'location', 'rent', 'available_from',
+            'lease_duration', 'room_type', 'preferred_gender', 'current_occupants',
+            'total_occupants', 'has_furniture', 'has_parking', 'has_laundry',
+            'has_kitchen', 'has_wifi', 'is_pets_allowed', 'is_smoking_allowed',
+            'occupation', 'university', 'contact_number', 'contact_email',
+            'is_active', 'created_at', 'updated_at', 'images'
+        ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']

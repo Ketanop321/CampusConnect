@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, CalendarIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { getEvents } from '../../services/noticeboardService';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, CalendarIcon, MapPinIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { getEvents, deleteEvent } from '../../services/noticeboardService';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 const NoticeboardPage = () => {
   const [events, setEvents] = useState([]);
@@ -16,6 +18,8 @@ const NoticeboardPage = () => {
     is_online: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEvents();
@@ -76,6 +80,31 @@ const NoticeboardPage = () => {
   const formatTime = (dateString) => {
     return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const handleEditEvent = (eventId) => {
+    navigate(`/noticeboard/edit/${eventId}`);
+  };
+
+  const handleDeleteEvent = async (eventId, eventTitle) => {
+    if (window.confirm(`Are you sure you want to delete "${eventTitle}"?`)) {
+      try {
+        await deleteEvent(eventId);
+        toast.success('Event deleted successfully');
+        fetchEvents(); // Refresh the events list
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        toast.error('Failed to delete event. Please try again.');
+      }
+    }
+  };
+
+  // Check if current user can edit/delete an event
+  const canEditEvent = useMemo(() => {
+    return (event) => {
+      if (!user) return false;
+      return user.is_staff || user.id === event.organizer?.id;
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -331,6 +360,35 @@ const NoticeboardPage = () => {
                         </div>
                         
                         <div className="flex space-x-2">
+                          {canEditEvent(event) && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleEditEvent(event.id);
+                                }}
+                                className="inline-flex items-center px-2 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                title="Edit event"
+                              >
+                                <PencilIcon className="h-3.5 w-3.5 mr-1" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleDeleteEvent(event.id, event.title);
+                                }}
+                                className="inline-flex items-center px-2 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                title="Delete event"
+                              >
+                                <TrashIcon className="h-3.5 w-3.5 mr-1" />
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          
                           {event.is_online && event.meeting_link && (
                             <a
                               href={event.meeting_link}

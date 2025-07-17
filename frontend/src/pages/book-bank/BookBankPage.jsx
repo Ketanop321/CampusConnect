@@ -1,82 +1,48 @@
 import { useState, useEffect } from 'react';
-import { PlusIcon, MagnifyingGlassIcon, BookOpenIcon } from '@heroicons/react/24/outline';
-import { useQuery } from '@tanstack/react-query';
+import { PlusIcon, MagnifyingGlassIcon, BookOpenIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import BookItem from '../../components/book-bank/BookItem';
 import BookForm from '../../components/book-bank/BookForm';
-import Button from '../../components/ui/Button';
+import { Button } from '../../components/ui/Button';
+import { getBooks, createBook, updateBook, deleteBook, requestBook } from '../../services/bookService';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 
-// Mock data - replace with actual API calls
-const mockBooks = [
-  {
-    id: '1',
-    title: 'Introduction to Algorithms',
-    author: 'Thomas H. Cormen',
-    isbn: '978-0262033848',
-    edition: '3rd',
-    condition: 'Good',
-    price: 45.99,
-    status: 'available',
-    description: 'Comprehensive guide to algorithms and data structures.',
-    seller: {
-      id: 'user1',
-      name: 'Alex Johnson',
-      email: 'alex@example.com',
-      rating: 4.8,
+// Helper function to format book data
+const formatBookData = (book) => {
+  // Handle the case where book is already formatted or comes from API
+  const formattedBook = {
+    ...book,
+    id: book.id,
+    title: book.title || 'Untitled',
+    author: book.author || 'Unknown Author',
+    isbn: book.isbn || 'N/A',
+    description: book.description || 'No description available',
+    condition: book.condition || 'good',
+    condition_display: book.condition_display || 'Good',
+    price: parseFloat(book.price) || 0,
+    department: book.department || 'General',
+    contact_email: book.contact_email || '',
+    contact_phone: book.contact_phone || '',
+    status: 'available', // Default status
+    postedDate: book.created_at || new Date().toISOString(),
+    seller: book.posted_by || { 
+      id: book.posted_by?.id || '',
+      name: book.posted_by?.name || 'Unknown Seller',
+      email: book.posted_by?.email || ''
     },
-    image: 'https://m.media-amazon.com/images/I/41vLer1KbmL._SY425_.jpg',
-    postedDate: '2023-05-15T10:30:00Z',
-  },
-  {
-    id: '2',
-    title: 'Clean Code: A Handbook of Agile Software Craftsmanship',
-    author: 'Robert C. Martin',
-    isbn: '978-0132350884',
-    edition: '1st',
-    condition: 'Like New',
-    price: 35.50,
-    status: 'available',
-    description: 'A must-read for any developer who wants to write clean, maintainable code.',
-    seller: {
-      id: 'user2',
-      name: 'Sarah Williams',
-      email: 'sarah@example.com',
-      rating: 4.9,
-    },
-    image: 'https://m.media-amazon.com/images/I/41xShlnTZTL._SY425_.jpg',
-    postedDate: '2023-06-01T14:15:00Z',
-  },
-  {
-    id: '3',
-    title: 'Designing Data-Intensive Applications',
-    author: 'Martin Kleppmann',
-    isbn: '978-1449373320',
-    edition: '1st',
-    condition: 'Good',
-    price: 42.75,
-    status: 'sold',
-    description: 'The big ideas behind reliable, scalable, and maintainable systems.',
-    seller: {
-      id: 'user3',
-      name: 'Michael Chen',
-      email: 'michael@example.com',
-      rating: 4.7,
-    },
-    image: 'https://m.media-amazon.com/images/I/51ZSpMl1-2L._SY425_.jpg',
-    postedDate: '2023-05-20T09:45:00Z',
-  },
-];
-
-const fetchBooks = async () => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockBooks);
-    }, 500);
-  });
+    // Handle images array or single image
+    image: (book.images && book.images[0]?.image) || book.image || 'https://via.placeholder.com/200x300?text=No+Image',
+  };
+  
+  return formattedBook;
 };
 
 const BookBankPage = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: 'all',
@@ -84,10 +50,95 @@ const BookBankPage = () => {
     sortBy: 'newest',
   });
 
-  const { data: books = [], isLoading } = useQuery({
+  // Fetch books from API
+  const { data: booksResponse, isLoading, isError, error } = useQuery({
     queryKey: ['books'],
-    queryFn: fetchBooks,
+    queryFn: getBooks,
+    select: (data) => {
+      // Handle both array response and paginated response
+      const books = Array.isArray(data) ? data : (data.results || []);
+      return books.map(formatBookData);
+    },
   });
+  
+  const booksData = Array.isArray(booksResponse) ? booksResponse : (booksResponse?.results || []);
+
+  // Create book mutation
+  const createBookMutation = useMutation({
+    mutationFn: createBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['books']);
+      setIsFormOpen(false);
+      toast.success('Book listed successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to list book');
+    },
+  });
+
+  // Update book mutation
+  const updateBookMutation = useMutation({
+    mutationFn: ({ id, ...data }) => updateBook(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['books']);
+      setIsFormOpen(false);
+      setEditingBook(null);
+      toast.success('Book updated successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to update book');
+    },
+  });
+
+  // Delete book mutation
+  const deleteBookMutation = useMutation({
+    mutationFn: deleteBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['books']);
+      toast.success('Book deleted successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete book');
+    },
+  });
+
+  // Request book mutation
+  const requestBookMutation = useMutation({
+    mutationFn: ({ bookId, message }) => requestBook(bookId, message),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['books']);
+      toast.success('Book request sent successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to send book request');
+    },
+  });
+
+  const handleEditBook = (book) => {
+    setEditingBook(book);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteBook = (bookId) => {
+    if (window.confirm('Are you sure you want to delete this book?')) {
+      deleteBookMutation.mutate(bookId);
+    }
+  };
+
+  const handleRequestBook = (bookId, message) => {
+    requestBookMutation.mutate({ bookId, message });
+  };
+
+  const handleSubmitBook = (bookData) => {
+    if (editingBook) {
+      updateBookMutation.mutate({ id: editingBook.id, ...bookData });
+    } else {
+      createBookMutation.mutate(bookData);
+    }
+  };
+
+  // Use the data from the API
+  const books = booksData || [];
 
   const filteredBooks = books.filter((book) => {
     // Filter by search term
@@ -124,17 +175,6 @@ const BookBankPage = () => {
       ...prev,
       [filterName]: value,
     }));
-  };
-
-  const handleSubmitBook = (newBook) => {
-    console.log('New book submitted:', newBook);
-    // In a real app, you would add the book to the database here
-    setIsFormOpen(false);
-  };
-
-  const handlePurchase = (bookId) => {
-    console.log('Purchase initiated for book:', bookId);
-    // In a real app, you would handle the purchase flow here
   };
 
   if (isLoading) {
@@ -247,42 +287,70 @@ const BookBankPage = () => {
       </div>
 
       {/* Books Grid */}
-      {sortedBooks.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {sortedBooks.map((book) => (
-            <BookItem
-              key={book.id}
-              book={book}
-              onPurchase={handlePurchase}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 bg-white shadow rounded-lg">
-          <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No books found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {searchTerm || filters.status !== 'all' || filters.condition !== 'all'
-              ? 'Try adjusting your search or filter criteria.'
-              : 'Be the first to list a book for sale.'}
-          </p>
-          <div className="mt-6">
-            <Button
-              onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-              Sell a Book
-            </Button>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {isLoading ? (
+          <div className="col-span-full flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           </div>
-        </div>
-      )}
+        ) : isError ? (
+          <div className="col-span-full text-center py-12">
+            <ExclamationCircleIcon className="mx-auto h-12 w-12 text-red-500" />
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading books</h3>
+            <p className="mt-1 text-sm text-gray-500">Failed to load books. Please try again later.</p>
+          </div>
+        ) : booksData && booksData.length > 0 ? (
+          booksData.map((book) => {
+            const isOwner = user?.id === book.seller?.id;
+            return (
+              <BookItem
+                key={book.id}
+                book={book}
+                isOwner={isOwner}
+                onPurchase={handleRequestBook}
+                onEdit={isOwner ? () => handleEditBook(book) : null}
+                onDelete={isOwner ? () => handleDeleteBook(book.id) : null}
+              />
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-16 bg-white shadow rounded-lg">
+            <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {searchTerm || filters.status !== 'all' || filters.condition !== 'all'
+                ? 'No books match your search criteria'
+                : 'No books found'}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {searchTerm || filters.status !== 'all' || filters.condition !== 'all'
+                ? 'Try adjusting your search or filter criteria.'
+                : 'Be the first to list a book for sale.'}
+            </p>
+            <div className="mt-6">
+              <Button
+                onClick={() => {
+                  setEditingBook(null);
+                  setIsFormOpen(true);
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                Sell a Book
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Sell Book Form Modal */}
+      {/* Book Form Modal */}
       <BookForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingBook(null);
+        }}
         onSubmit={handleSubmitBook}
+        initialData={editingBook}
+        isSubmitting={createBookMutation.isLoading || updateBookMutation.isLoading}
       />
     </div>
   );

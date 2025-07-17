@@ -29,15 +29,19 @@ const RoommatePage = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [filters]);
+  }, []);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const data = await getRoommatePosts(filters);
-      setPosts(data);
+      const response = await getRoommatePosts();
+      // Handle paginated response (results array) or direct array response
+      setPosts(Array.isArray(response) ? response : (response.results || []));
+      setError(null);
     } catch (error) {
       console.error('Error fetching roommate posts:', error);
+      setError('Failed to load posts. Please try again later.');
+      setPosts([]); // Ensure posts is always an array
     } finally {
       setLoading(false);
     }
@@ -59,19 +63,28 @@ const RoommatePage = () => {
   const filteredPosts = Array.isArray(posts) ? posts.filter(post => {
     if (!post) return false;
     
-    const searchTerm = filters.location?.toLowerCase() || '';
-    const postTitle = post.title?.toLowerCase() || '';
-    const postDescription = post.description?.toLowerCase() || '';
-    const postLocation = post.location?.toLowerCase() || '';
+    // Location search
+    const searchTerm = (filters.location || '').toLowerCase();
+    const postTitle = (post.title || '').toLowerCase();
+    const postDescription = (post.description || '').toLowerCase();
+    const postLocation = (post.location || '').toLowerCase();
     
-    const matchesSearch = postTitle.includes(searchTerm) || postDescription.includes(searchTerm);
-    const matchesLocation = !filters.location || postLocation.includes(searchTerm);
-    const matchesRent = (!filters.minRent || (post.rent && post.rent >= Number(filters.minRent))) && 
-                       (!filters.maxRent || (post.rent && post.rent <= Number(filters.maxRent)));
+    const matchesSearch = !searchTerm || 
+      postTitle.includes(searchTerm) || 
+      postDescription.includes(searchTerm) ||
+      postLocation.includes(searchTerm);
+    
+    // Numeric filters
+    const postRent = parseFloat(post.rent) || 0;
+    const matchesMinRent = !filters.minRent || postRent >= parseFloat(filters.minRent);
+    const matchesMaxRent = !filters.maxRent || postRent <= parseFloat(filters.maxRent);
+    
+    // Exact match filters
     const matchesRoomType = !filters.roomType || post.room_type === filters.roomType;
     const matchesGender = !filters.preferredGender || post.preferred_gender === filters.preferredGender;
     
-    return matchesSearch && matchesLocation && matchesRent && matchesRoomType && matchesGender;
+    return matchesSearch && matchesMinRent && matchesMaxRent && 
+           matchesRoomType && matchesGender;
   }) : [];
 
   if (loading) {
@@ -229,16 +242,8 @@ const RoommatePage = () => {
             <p className="mt-1 text-sm text-gray-500">
               {filters.location || filters.minRent || filters.maxRent || filters.roomType || filters.preferredGender
                 ? 'Try adjusting your search or filter criteria.'
-                : 'There are currently no posts. Be the first to create one!'}
+                : 'There are currently no posts.'}
             </p>
-            <div className="mt-6">
-              <Link
-                to="/roommate/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Create New Post
-              </Link>
-            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
