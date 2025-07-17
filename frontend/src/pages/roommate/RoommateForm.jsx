@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { 
   createRoommatePost, 
   updateRoommatePost, 
@@ -85,14 +86,18 @@ const RoommateForm = ({ isEdit = false }) => {
   };
 
   const handleImageChange = (e) => {
-    // In a real app, you would upload images to a storage service
-    // and get back URLs to save in your database
     const files = Array.from(e.target.files);
-    const newImages = files.map(file => ({
-      id: URL.createObjectURL(file),
-      image: URL.createObjectURL(file),
-      is_primary: false
-    }));
+    
+    // Create preview URLs for the new files
+    const newImages = files.map(file => {
+      const previewUrl = URL.createObjectURL(file);
+      return {
+        file, // Store the actual file object
+        preview: previewUrl,
+        is_primary: false,
+        isNew: true // Flag to identify new uploads
+      };
+    });
     
     setFormData(prev => ({
       ...prev,
@@ -102,7 +107,13 @@ const RoommateForm = ({ isEdit = false }) => {
 
   const removeImage = (index) => {
     const newImages = [...formData.images];
-    newImages.splice(index, 1);
+    const removedImage = newImages.splice(index, 1)[0];
+    
+    // Revoke the object URL to prevent memory leaks
+    if (removedImage.preview) {
+      URL.revokeObjectURL(removedImage.preview);
+    }
+    
     setFormData(prev => ({
       ...prev,
       images: newImages
@@ -120,6 +131,17 @@ const RoommateForm = ({ isEdit = false }) => {
       images: newImages
     }));
   };
+  
+  // Clean up object URLs when the component unmounts
+  useEffect(() => {
+    return () => {
+      formData.images.forEach(image => {
+        if (image.preview) {
+          URL.revokeObjectURL(image.preview);
+        }
+      });
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,15 +149,92 @@ const RoommateForm = ({ isEdit = false }) => {
     setError('');
 
     try {
-      if (isEdit) {
-        await updateRoommatePost(id, formData);
-      } else {
-        await createRoommatePost(formData);
+      // Prepare form data for submission
+      const formDataToSend = new FormData();
+      
+      // Create a new object with the correct field names for the backend
+      const backendFormData = {
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        rent: formData.rent,
+        available_from: formData.available_from,
+        lease_duration: formData.lease_duration,
+        room_type: formData.room_type,
+        preferred_gender: formData.preferred_gender, // Ensure this matches the backend model
+        current_occupants: formData.current_occupants,
+        total_occupants: formData.total_occupants,
+        has_furniture: formData.has_furniture,
+        has_parking: formData.has_parking,
+        has_laundry: formData.has_laundry,
+        has_kitchen: formData.has_kitchen,
+        has_wifi: formData.has_wifi,
+        is_pets_allowed: formData.is_pets_allowed,
+        is_smoking_allowed: formData.is_smoking_allowed,
+        occupation: formData.occupation,
+        university: formData.university,
+        contact_number: formData.contact_number,
+        contact_email: formData.contact_email,
+      };
+
+      // Add all fields to FormData
+      Object.entries(backendFormData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formDataToSend.append(key, value);
+        }
+      });
+
+      // Handle images
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach((image, index) => {
+          // If it's a new file (not yet uploaded)
+          if (image instanceof File) {
+            formDataToSend.append(`images`, image);
+          }
+          // If it's an existing image URL, we need to handle it differently
+          // This depends on your backend API
+        });
       }
+
+      // Add CSRF token if needed (Django expects it in the headers or as a cookie)
+      const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+      if (csrfToken) {
+        formDataToSend.append('csrfmiddlewaretoken', csrfToken);
+      }
+
+      // Make the API call
+      if (isEdit) {
+        await updateRoommatePost(id, formDataToSend);
+      } else {
+        await createRoommatePost(formDataToSend);
+      }
+      
+      // Show success message and redirect
+      // You can use a toast notification here if you have one
       navigate('/roommate');
+      
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred. Please try again.');
       console.error('Error saving post:', err);
+      
+      // Handle validation errors
+      if (err.response?.data) {
+        if (typeof err.response.data === 'object') {
+          // Format Django REST framework validation errors
+          const errorMessages = [];
+          for (const [field, errors] of Object.entries(err.response.data)) {
+            if (Array.isArray(errors)) {
+              errorMessages.push(`${field}: ${errors.join(', ')}`);
+            } else {
+              errorMessages.push(`${field}: ${errors}`);
+            }
+          }
+          setError(errorMessages.join('\n'));
+        } else {
+          setError(err.response.data.message || 'An error occurred. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -581,68 +680,73 @@ const RoommateForm = ({ isEdit = false }) => {
           <div className="mt-6">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {formData.images.map((image, index) => (
-                <div key={image.id} className="relative group">
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
-                    <img
-                      src={image.image}
-                      alt={`Room ${index + 1}`}
-                      className="h-full w-full object-cover object-center"
-                    />
-                  </div>
+                <div key={index} className="relative group h-32">
+                  <img
+                    src={image.preview || (image.image ? `${image.image}` : '')}
+                    alt={`Preview ${index + 1}`}
+                    className="h-full w-full object-cover rounded-lg"
+                  />
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setPrimaryImage(index)}
-                        className="p-1.5 bg-white rounded-full text-indigo-600 hover:bg-indigo-50"
-                        title="Set as primary"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="p-1.5 bg-white rounded-full text-red-600 hover:bg-red-50"
-                        title="Remove image"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(index);
+                      }}
+                      className="text-white hover:text-red-400 p-2"
+                      aria-label="Remove image"
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPrimaryImage(index);
+                      }}
+                      className={`p-2 ${image.is_primary ? 'text-yellow-400' : 'text-white'}`}
+                      aria-label={image.is_primary ? 'Primary image' : 'Set as primary'}
+                    >
+                      <svg className="h-5 w-5" fill={image.is_primary ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                    </button>
                   </div>
                   {image.is_primary && (
-                    <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+                    <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
                       Primary
                     </div>
                   )}
                 </div>
               ))}
-              
-              <div className="flex items-center justify-center">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg className="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                    </svg>
-                    <p className="text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
-                  </div>
-                  <input 
-                    id="dropzone-file" 
-                    type="file" 
-                    className="hidden" 
-                    multiple
+              {formData.images.length < 10 && (
+                <label className="flex items-center justify-center h-32 w-full border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
+                  <input
+                    type="file"
+                    className="hidden"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                   />
+                  <div className="text-center p-4">
+                    <PlusIcon className="mx-auto h-8 w-8 text-gray-400" />
+                    <span className="mt-1 block text-sm text-gray-600">
+                      {formData.images.length === 0 ? 'Add photos (up to 10)' : 'Add more photos'}
+                    </span>
+                    {formData.images.length > 0 && (
+                      <span className="text-xs text-gray-500">{formData.images.length}/10 photos</span>
+                    )}
+                  </div>
                 </label>
-              </div>
+              )}
             </div>
+            {formData.images.length === 0 && (
+              <p className="mt-2 text-sm text-gray-500">
+                Add at least one photo to help others see your place. The first image will be used as the main photo.
+              </p>
+            )}
           </div>
         </div>
 

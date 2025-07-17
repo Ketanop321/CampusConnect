@@ -5,8 +5,10 @@ import {
   UserIcon, 
   TagIcon, 
   PencilIcon,
+  TrashIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   PhotoIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
@@ -18,12 +20,15 @@ const LostFoundItem = ({
   onClaim, 
   onMarkAsFound, 
   onEdit,
+  onDelete,
   currentUserId,
   isAdmin 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isMarkingAsFound, setIsMarkingAsFound] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   
@@ -74,6 +79,23 @@ const LostFoundItem = ({
     onEdit(item);
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await onDelete(item.id);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error(error.message || 'Failed to delete item');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Format the image URL to use the correct backend URL if it's a relative path
   const getImageUrl = () => {
     if (!item.image) return null;
@@ -114,7 +136,7 @@ const LostFoundItem = ({
         )}
         
         {(isOwner || isAdmin) && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex space-x-1">
             <button
               onClick={handleEdit}
               className="p-2 rounded-full bg-white/80 text-gray-700 hover:bg-white transition-all shadow-sm"
@@ -122,6 +144,14 @@ const LostFoundItem = ({
               aria-label="Edit item"
             >
               <PencilIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="p-2 rounded-full bg-white/80 text-red-600 hover:bg-red-50 transition-all shadow-sm"
+              title="Delete item"
+              aria-label="Delete item"
+            >
+              <TrashIcon className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -243,14 +273,54 @@ const LostFoundItem = ({
             variant="primary"
             className="text-sm"
             onClick={() => {
-              // In a real app, this would navigate to a detail view
-              console.log('View details for item:', item.id);
+              window.location.href = `/lost-found/${item.id}`;
             }}
           >
             View Details
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="sm:flex sm:items-start">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Delete item
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete this item? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                type="button"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

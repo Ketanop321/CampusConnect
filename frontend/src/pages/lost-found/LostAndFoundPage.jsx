@@ -139,6 +139,24 @@ const LostAndFoundPage = () => {
     },
   });
 
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id) => {
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      return lostFoundService.deleteLostFoundItem(id, token);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['lostFoundItems']);
+      toast.success('Item deleted successfully');
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast.error(error.response?.data?.detail || 'Failed to delete item');
+    },
+  });
+
   // Filter items based on search and filters will be done in the render section
 
   const handleSubmitItem = async (formData) => {
@@ -195,6 +213,14 @@ const LostAndFoundPage = () => {
       await markAsFoundMutation.mutateAsync(itemId);
     } catch (error) {
       console.error('Error marking item as found:', error);
+    }
+  };
+
+  const handleDeleteItem = async (id) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      // Error is handled by the mutation
     }
   };
 
@@ -380,6 +406,7 @@ const LostAndFoundPage = () => {
                   onClaim={handleClaimItem}
                   onMarkAsFound={handleMarkAsFound}
                   onEdit={handleEditItem}
+                  onDelete={handleDeleteItem}
                   currentUserId={user?.id}
                   isAdmin={user?.is_staff}
                 />
