@@ -177,13 +177,7 @@ const BookBankPage = () => {
     }));
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -287,43 +281,25 @@ const BookBankPage = () => {
       </div>
 
       {/* Books Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mt-8">
         {isLoading ? (
-          <div className="col-span-full flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : isError ? (
-          <div className="col-span-full text-center py-12">
+          <div className="text-center py-12">
             <ExclamationCircleIcon className="mx-auto h-12 w-12 text-red-500" />
-            <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading books</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading books</h3>
             <p className="mt-1 text-sm text-gray-500">Failed to load books. Please try again later.</p>
           </div>
-        ) : booksData && booksData.length > 0 ? (
-          booksData.map((book) => {
-            const isOwner = user?.id === book.seller?.id;
-            return (
-              <BookItem
-                key={book.id}
-                book={book}
-                isOwner={isOwner}
-                onPurchase={handleRequestBook}
-                onEdit={isOwner ? () => handleEditBook(book) : null}
-                onDelete={isOwner ? () => handleDeleteBook(book.id) : null}
-              />
-            );
-          })
-        ) : (
-          <div className="col-span-full text-center py-16 bg-white shadow rounded-lg">
+        ) : books.length === 0 ? (
+          <div className="text-center py-12">
             <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {searchTerm || filters.status !== 'all' || filters.condition !== 'all'
-                ? 'No books match your search criteria'
-                : 'No books found'}
-            </h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No books found</h3>
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm || filters.status !== 'all' || filters.condition !== 'all'
                 ? 'Try adjusting your search or filter criteria.'
-                : 'Be the first to list a book for sale.'}
+                : 'Be the first to list a book!'}
             </p>
             <div className="mt-6">
               <Button
@@ -337,6 +313,18 @@ const BookBankPage = () => {
                 Sell a Book
               </Button>
             </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {books.map((book) => (
+              <BookItem
+                key={book.id}
+                book={book}
+                onPurchase={(bookId) => handleRequestBook(bookId, 'I am interested in buying this book.')}
+                onEdit={handleEditBook}
+                onDelete={handleDeleteBook}
+              />
+            ))}
           </div>
         )}
       </div>

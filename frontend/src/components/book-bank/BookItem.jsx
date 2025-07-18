@@ -1,9 +1,18 @@
 import { useState } from 'react';
-import { BookOpenIcon, CurrencyDollarIcon, UserIcon, TagIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { 
+  BookOpenIcon, 
+  CurrencyDollarIcon, 
+  UserIcon, 
+  TagIcon, 
+  ClockIcon,
+  PencilIcon,
+  TrashIcon
+} from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import Button from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 
-const BookItem = ({ book, onPurchase }) => {
+const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
@@ -36,8 +45,40 @@ const BookItem = ({ book, onPurchase }) => {
     }
   };
 
+  const { user } = useAuth();
+  const isOwner = user?.id === book.posted_by?.id;
+
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className="bg-white overflow-hidden shadow rounded-lg relative">
+      {/* Edit and Delete Buttons - Only show for owner */}
+      {isOwner && (
+        <div className="absolute top-2 right-2 flex space-x-1 z-10">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(book);
+            }}
+            className="p-2 rounded-full bg-white/80 text-gray-700 hover:bg-white transition-all shadow-sm"
+            title="Edit book"
+            aria-label="Edit book"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm('Are you sure you want to delete this book?')) {
+                onDelete(book.id);
+              }
+            }}
+            className="p-2 rounded-full bg-white/80 text-red-600 hover:bg-red-50 transition-all shadow-sm"
+            title="Delete book"
+            aria-label="Delete book"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <div className="p-5">
         <div className="flex items-start">
           <div className="flex-shrink-0 h-40 w-28 bg-gray-200 rounded-md overflow-hidden">

@@ -10,7 +10,7 @@ export const getBooks = async (params = {}) => {
 };
 
 export const getBook = async (id) => {
-  const response = await api.get(`${BOOKS_API}/${id}/`);
+  const response = await api.get(`${BOOKS_API}${id}/`);
   return response.data;
 };
 
@@ -39,7 +39,7 @@ export const updateBook = async (id, bookData) => {
     }
   });
   
-  const response = await api.patch(`${BOOKS_API}/${id}/`, formData, {
+  const response = await api.patch(`${BOOKS_API}${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -48,7 +48,7 @@ export const updateBook = async (id, bookData) => {
 };
 
 export const deleteBook = async (id) => {
-  await api.delete(`${BOOKS_API}/${id}/`);
+  return await api.delete(`${BOOKS_API}${id}/`);
 };
 
 export const requestBook = async (bookId, message) => {
