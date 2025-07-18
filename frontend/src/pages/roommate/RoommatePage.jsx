@@ -123,9 +123,11 @@ const RoommatePage = () => {
             <FunnelIcon className="h-4 w-4 mr-2" />
             {showFilters ? 'Hide Filters' : 'Filters'}
           </Button>
-          <Button as={Link} to="/roommate/new" className="flex items-center">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Create Post
+          <Button asChild className="flex items-center">
+            <Link to="/roommate/new" className="flex items-center">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create Post
+            </Link>
           </Button>
         </div>
       </div>
