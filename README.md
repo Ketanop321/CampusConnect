@@ -71,7 +71,6 @@ A comprehensive campus management platform built with Django and Django REST Fra
    ```
     ```bash
    pip install django-filter==25.1
-t
    ```
 
 3. **Apply migrations**
