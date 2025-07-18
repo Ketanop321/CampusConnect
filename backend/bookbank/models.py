@@ -50,15 +50,23 @@ class BookPost(models.Model):
 
 class BookImage(models.Model):
     book = models.ForeignKey(BookPost, on_delete=models.CASCADE, related_name='images')
-    image = models.URLField()
+    image = models.ImageField(upload_to='books/')
     is_primary = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['-is_primary', 'uploaded_at']
+        verbose_name = 'Book Image'
+        verbose_name_plural = 'Book Images'
     
     def __str__(self):
         return f"Image for {self.book.title}"
+    
+    def save(self, *args, **kwargs):
+        # If this is the first image for the book, set it as primary
+        if not self.pk and not self.book.images.exists():
+            self.is_primary = True
+        super().save(*args, **kwargs)
 
 class BookRequest(models.Model):
     STATUS_CHOICES = [
