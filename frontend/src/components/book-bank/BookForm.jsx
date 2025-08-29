@@ -8,7 +8,6 @@ import { useAuth } from '../../context/AuthContext';
 
 const conditionOptions = [
   { value: 'new', label: 'New' },
-  { value: 'like new', label: 'Like New' },
   { value: 'good', label: 'Good' },
   { value: 'fair', label: 'Fair' },
   { value: 'poor', label: 'Poor' },
@@ -141,13 +140,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData, isSubmitting: propIs
       // Handle image
       if (imageFile) {
         formData.append('image', imageFile);
-      } else if (initialData?.image && !preview) {
-        // If editing and image was removed
-        formData.delete('image');
-      } else if (initialData?.image) {
-        // If it's an edit and we have an existing image, include the URL
-        formData.append('image', initialData.image);
       }
+      // Note: For updates, if no new image is provided, the backend will keep the existing image
       
       // Log the form data for debugging
       console.log('FormData contents:');

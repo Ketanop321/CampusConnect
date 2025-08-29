@@ -1,22 +1,12 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config';
+import api from './api';
 
-const API_URL = `${API_BASE_URL}/api/lostfound/items/`;
+const API_URL = '/api/lostfound/items/';
 
 // Get all lost and found items
-const getLostFoundItems = async (token = null) => {
+const getLostFoundItems = async () => {
   try {
-    const config = {};
-    
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`
-      };
-    }
-    
     console.log('Fetching items from:', API_URL);
-    const response = await axios.get(API_URL, config);
+    const response = await api.get(API_URL);
     
     // Handle different response formats
     const items = response.data.results || response.data || [];
@@ -35,11 +25,10 @@ const getLostFoundItems = async (token = null) => {
 };
 
 // Create a new lost/found item
-const createLostFoundItem = async (itemData, token) => {
+const createLostFoundItem = async (itemData) => {
   const config = {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`,
     },
   };
 
@@ -51,16 +40,15 @@ const createLostFoundItem = async (itemData, token) => {
     }
   });
 
-  const response = await axios.post(API_URL, formData, config);
+  const response = await api.post(API_URL, formData, config);
   return response.data;
 };
 
 // Update a lost/found item
-const updateLostFoundItem = async (id, itemData, token) => {
+const updateLostFoundItem = async (id, itemData) => {
   const config = {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`,
     },
   };
 
@@ -80,59 +68,32 @@ const updateLostFoundItem = async (id, itemData, token) => {
     }
   });
 
-  const response = await axios.patch(`${API_URL}${id}/`, formData, config);
+  const response = await api.patch(`${API_URL}${id}/`, formData, config);
   return response.data;
 };
 
 // Delete a lost/found item
-const deleteLostFoundItem = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.delete(`${API_URL}${id}/`, config);
+const deleteLostFoundItem = async (id) => {
+  const response = await api.delete(`${API_URL}${id}/`);
   return response.data;
 };
 
 // Claim an item
-const claimItem = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.post(`${API_URL}${id}/claim/`, {}, config);
+const claimItem = async (id) => {
+  const response = await api.post(`${API_URL}${id}/claim/`, {});
   return response.data;
 };
 
 // Mark item as found
-const markAsFound = async (id, token) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const response = await axios.post(`${API_URL}${id}/mark_found/`, {}, config);
+const markAsFound = async (id) => {
+  const response = await api.post(`${API_URL}${id}/mark_found/`, {});
   return response.data;
 };
 
 // Get a single lost/found item by ID
-const getLostFoundItem = async (id, token = null) => {
+const getLostFoundItem = async (id) => {
   try {
-    const config = {};
-    
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`
-      };
-    }
-    
-    const response = await axios.get(`${API_URL}${id}/`, config);
+    const response = await api.get(`${API_URL}${id}/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching lost and found item:', {

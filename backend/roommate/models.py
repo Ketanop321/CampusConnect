@@ -63,7 +63,7 @@ class RoommatePost(models.Model):
 
 class RoommateImage(models.Model):
     post = models.ForeignKey(RoommatePost, on_delete=models.CASCADE, related_name='images')
-    image = models.URLField()
+    image = models.ImageField(upload_to='roommate/')
     is_primary = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -72,3 +72,9 @@ class RoommateImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.post.title}"
+    
+    def save(self, *args, **kwargs):
+        # If this is the first image for the post, set it as primary
+        if not self.pk and not self.post.images.exists():
+            self.is_primary = True
+        super().save(*args, **kwargs)

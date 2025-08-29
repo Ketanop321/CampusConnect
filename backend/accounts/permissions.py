@@ -11,9 +11,32 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
 
         # Write permissions are only allowed to the owner of the object.
-        # Check if the object has a 'reporter' attribute and if it matches the request user
+        # Check for different ownership attributes based on the model
         # or if the user is staff/admin
-        return (hasattr(obj, 'reporter') and obj.reporter == request.user) or request.user.is_staff
+        if request.user.is_staff:
+            return True
+            
+        # Check for 'reporter' attribute (for lost and found items)
+        if hasattr(obj, 'reporter') and obj.reporter == request.user:
+            return True
+            
+        # Check for 'posted_by' attribute (for book posts)
+        if hasattr(obj, 'posted_by') and obj.posted_by == request.user:
+            return True
+            
+        # Check for 'user' attribute (for user profiles)
+        if hasattr(obj, 'user') and obj.user == request.user:
+            return True
+            
+        # Check for 'organizer' attribute (for events)
+        if hasattr(obj, 'organizer') and obj.organizer == request.user:
+            return True
+            
+        # If the object is the user themselves
+        if obj == request.user:
+            return True
+            
+        return False
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """

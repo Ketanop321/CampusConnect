@@ -64,24 +64,24 @@ export const getRoommatePost = async (id) => {
 
 export const createRoommatePost = async (postData) => {
   try {
-    // Check if we have files to upload
-    const hasFiles = postData.images && postData.images.length > 0;
-    
     let response;
     
-    if (hasFiles) {
-      // For file uploads, use FormData
-      const formData = createFormData(postData);
-      
-      // Override the content type for multipart/form-data
-      response = await api.post(API_BASE_URL, formData, {
+    // Always use FormData to handle potential file uploads
+    if (postData instanceof FormData) {
+      // If it's already FormData, use it directly
+      response = await api.post(API_BASE_URL, postData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
     } else {
-      // For regular JSON data
-      response = await api.post(API_BASE_URL, postData);
+      // Convert to FormData if it's a regular object
+      const formData = createFormData(postData);
+      response = await api.post(API_BASE_URL, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     }
     
     return response.data;
@@ -124,24 +124,24 @@ export const createRoommatePost = async (postData) => {
 
 export const updateRoommatePost = async (id, postData) => {
   try {
-    // Check if we have files to upload
-    const hasFiles = postData.images && postData.images.length > 0;
-    
     let response;
     
-    if (hasFiles) {
-      // For file uploads, use FormData
-      const formData = createFormData(postData);
-      
-      // For updates, we need to use PATCH to avoid sending all fields
-      response = await api.patch(`${API_BASE_URL}${id}/`, formData, {
+    // Always use FormData for updates to handle potential file uploads
+    if (postData instanceof FormData) {
+      // If it's already FormData, use it directly
+      response = await api.patch(`${API_BASE_URL}${id}/`, postData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
     } else {
-      // For regular JSON data, use PATCH for partial updates
-      response = await api.patch(`${API_BASE_URL}${id}/`, postData);
+      // Convert to FormData if it's a regular object
+      const formData = createFormData(postData);
+      response = await api.patch(`${API_BASE_URL}${id}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     }
     
     return response.data;

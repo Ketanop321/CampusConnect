@@ -67,7 +67,20 @@ export const createEvent = async (eventData) => {
 
 export const updateEvent = async (id, eventData) => {
   const cleanId = id.replace(/^\/+|\/+$/g, '');
-  const response = await api.put(`${API_URL}${cleanId}/`, eventData);
+  
+  // Use FormData for file uploads
+  const formData = new FormData();
+  Object.keys(eventData).forEach(key => {
+    if (eventData[key] !== null && eventData[key] !== undefined) {
+      formData.append(key, eventData[key]);
+    }
+  });
+  
+  const response = await api.patch(`${API_URL}${cleanId}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 

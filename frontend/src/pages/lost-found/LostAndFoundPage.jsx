@@ -21,7 +21,7 @@ const formatDateForInput = (dateString) => {
 };
 
 const LostAndFoundPage = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -32,7 +32,7 @@ const LostAndFoundPage = () => {
   // Fetch all lost and found items
   const { data: response, isLoading, error, refetch, isError } = useQuery({
     queryKey: ['lostFoundItems'],
-    queryFn: () => lostFoundService.getLostFoundItems(token),
+    queryFn: () => lostFoundService.getLostFoundItems(),
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -80,10 +80,7 @@ const LostAndFoundPage = () => {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (itemData) => {
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
-      }
-      return lostFoundService.createLostFoundItem(itemData, token);
+      return lostFoundService.createLostFoundItem(itemData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
@@ -99,10 +96,7 @@ const LostAndFoundPage = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }) => {
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
-      }
-      return lostFoundService.updateLostFoundItem(id, data, token);
+      return lostFoundService.updateLostFoundItem(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
@@ -117,7 +111,7 @@ const LostAndFoundPage = () => {
 
   // Claim mutation
   const claimMutation = useMutation({
-    mutationFn: (id) => lostFoundService.claimItem(id, token),
+    mutationFn: (id) => lostFoundService.claimItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
       toast.success('Item claimed successfully');
@@ -129,7 +123,7 @@ const LostAndFoundPage = () => {
 
   // Mark as found mutation
   const markAsFoundMutation = useMutation({
-    mutationFn: (id) => lostFoundService.markAsFound(id, token),
+    mutationFn: (id) => lostFoundService.markAsFound(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);
       toast.success('Item marked as found');
@@ -142,10 +136,7 @@ const LostAndFoundPage = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
-      }
-      return lostFoundService.deleteLostFoundItem(id, token);
+      return lostFoundService.deleteLostFoundItem(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['lostFoundItems']);

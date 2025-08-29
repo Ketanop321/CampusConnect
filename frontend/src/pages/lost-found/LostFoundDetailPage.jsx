@@ -19,7 +19,6 @@ import toast from 'react-hot-toast';
 const LostFoundDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +28,7 @@ const LostFoundDetailPage = () => {
     const fetchItem = async () => {
       try {
         setLoading(true);
-        const data = await lostFoundService.getLostFoundItem(id, token);
+        const data = await lostFoundService.getLostFoundItem(id);
         setItem(data);
       } catch (err) {
         console.error('Error fetching item:', err);
@@ -41,7 +40,7 @@ const LostFoundDetailPage = () => {
     };
 
     fetchItem();
-  }, [id, token]);
+  }, [id]);
 
   const statusColors = {
     lost: 'bg-red-100 text-red-800',

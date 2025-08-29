@@ -184,16 +184,13 @@ const RoommateForm = ({ isEdit = false }) => {
         }
       });
 
-      // Handle images
+      // Handle images - for now, just send the first new image
+      // TODO: Implement multiple image upload support
       if (formData.images && formData.images.length > 0) {
-        formData.images.forEach((image, index) => {
-          // If it's a new file (not yet uploaded)
-          if (image instanceof File) {
-            formDataToSend.append(`images`, image);
-          }
-          // If it's an existing image URL, we need to handle it differently
-          // This depends on your backend API
-        });
+        const newImage = formData.images.find(img => img.isNew && img.file);
+        if (newImage) {
+          formDataToSend.append('image', newImage.file);
+        }
       }
 
       // Add CSRF token if needed (Django expects it in the headers or as a cookie)

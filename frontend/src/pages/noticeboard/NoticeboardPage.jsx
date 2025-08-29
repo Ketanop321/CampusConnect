@@ -82,7 +82,7 @@ const NoticeboardPage = () => {
   };
 
   const handleEditEvent = (eventId) => {
-    navigate(`/noticeboard/edit/${eventId}`);
+    navigate(`/noticeboard/${eventId}/edit`);
   };
 
   const handleDeleteEvent = async (eventId, eventTitle) => {
@@ -306,11 +306,11 @@ const NoticeboardPage = () => {
               <div key={event.id} className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
                 <div className="p-6">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                    {event.images && event.images.length > 0 && (
+                    {(event.primary_image || (event.images && event.images.length > 0)) && (
                       <div className="w-full md:w-48 flex-shrink-0">
                         <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
                           <img
-                            src={event.images[0].image}
+                            src={event.primary_image || event.images[0].image}
                             alt={event.title}
                             className="w-full h-full object-cover"
                           />
@@ -321,9 +321,16 @@ const NoticeboardPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-gray-900">{event.title}</h2>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                          {event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1)}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          {!event.is_approved && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Pending Approval
+                            </span>
+                          )}
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1)}
+                          </span>
+                        </div>
                       </div>
                       
                       <div className="mt-2 flex items-center text-sm text-gray-500">

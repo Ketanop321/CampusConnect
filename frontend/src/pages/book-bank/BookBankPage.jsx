@@ -24,15 +24,25 @@ const formatBookData = (book) => {
     department: book.department || 'General',
     contact_email: book.contact_email || '',
     contact_phone: book.contact_phone || '',
-    status: 'available', // Default status
+    // Map is_available to status for frontend compatibility
+    status: book.is_available ? 'available' : 'sold',
     postedDate: book.created_at || new Date().toISOString(),
-    seller: book.posted_by || { 
+    // Keep both seller and posted_by for compatibility
+    posted_by: book.posted_by || { 
       id: book.posted_by?.id || '',
-      name: book.posted_by?.name || 'Unknown Seller',
+      name: book.posted_by?.name || book.posted_by?.first_name || 'Unknown Seller',
       email: book.posted_by?.email || ''
     },
-    // Handle images array or single image
-    image: (book.images && book.images[0]?.image) || book.image || 'https://via.placeholder.com/200x300?text=No+Image',
+    seller: book.posted_by || { 
+      id: book.posted_by?.id || '',
+      name: book.posted_by?.name || book.posted_by?.first_name || 'Unknown Seller',
+      email: book.posted_by?.email || ''
+    },
+    // Use primary_image from API, fallback to first image, then placeholder
+    image: book.primary_image || 
+           (book.images && book.images[0]?.image) || 
+           book.image || 
+           'https://via.placeholder.com/200x300?text=No+Image',
   };
   
   return formattedBook;
@@ -115,7 +125,13 @@ const BookBankPage = () => {
   });
 
   const handleEditBook = (book) => {
-    setEditingBook(book);
+    // Prepare the book data for editing
+    const editData = {
+      ...book,
+      // Ensure price is a number for the form
+      price: parseFloat(book.price) || 0,
+    };
+    setEditingBook(editData);
     setIsFormOpen(true);
   };
 
@@ -150,8 +166,10 @@ const BookBankPage = () => {
     // Filter by status
     const matchesStatus = filters.status === 'all' || book.status === filters.status;
     
-    // Filter by condition
-    const matchesCondition = filters.condition === 'all' || book.condition.toLowerCase() === filters.condition;
+    // Filter by condition - handle both lowercase and exact match
+    const matchesCondition = filters.condition === 'all' || 
+      book.condition.toLowerCase() === filters.condition.toLowerCase() ||
+      book.condition === filters.condition;
 
     return matchesSearch && matchesStatus && matchesCondition;
   });
@@ -235,7 +253,6 @@ const BookBankPage = () => {
             >
               <option value="all">All Statuses</option>
               <option value="available">Available</option>
-              <option value="pending">Pending</option>
               <option value="sold">Sold</option>
             </select>
           </div>
@@ -253,7 +270,6 @@ const BookBankPage = () => {
             >
               <option value="all">All Conditions</option>
               <option value="new">New</option>
-              <option value="like new">Like New</option>
               <option value="good">Good</option>
               <option value="fair">Fair</option>
               <option value="poor">Poor</option>
@@ -316,7 +332,7 @@ const BookBankPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {books.map((book) => (
+            {sortedBooks.map((book) => (
               <BookItem
                 key={book.id}
                 book={book}

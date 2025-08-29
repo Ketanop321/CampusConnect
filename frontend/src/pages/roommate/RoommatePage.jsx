@@ -251,10 +251,10 @@ const RoommatePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
               <div key={post.id} className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
-                {post.images && post.images.length > 0 && (
+                {(post.primary_image || (post.images && post.images.length > 0)) && (
                   <div className="h-48 bg-gray-100 overflow-hidden">
                     <img
-                      src={post.images[0].image}
+                      src={post.primary_image || post.images[0].image}
                       alt={post.title}
                       className="w-full h-full object-cover"
                     />

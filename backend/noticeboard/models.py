@@ -53,7 +53,7 @@ class Event(models.Model):
 
 class EventImage(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='images')
-    image = models.URLField()
+    image = models.ImageField(upload_to='events/')
     is_primary = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
@@ -62,6 +62,12 @@ class EventImage(models.Model):
     
     def __str__(self):
         return f"Image for {self.event.title}"
+    
+    def save(self, *args, **kwargs):
+        # If this is the first image for the event, set it as primary
+        if not self.pk and not self.event.images.exists():
+            self.is_primary = True
+        super().save(*args, **kwargs)
 
 class EventRegistration(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

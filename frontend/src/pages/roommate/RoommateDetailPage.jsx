@@ -107,9 +107,9 @@ const RoommateDetailPage = () => {
         {/* Image Gallery */}
         <div className="bg-gray-100 p-4">
           <div className="relative h-64 md:h-96 rounded-lg overflow-hidden">
-            {post.images && post.images.length > 0 ? (
+            {post.primary_image || (post.images && post.images.length > 0) ? (
               <img
-                src={post.images[0].image}
+                src={post.primary_image || post.images[0].image}
                 alt={post.title}
                 className="w-full h-full object-cover"
               />
@@ -218,7 +218,7 @@ const RoommateDetailPage = () => {
 
         {isOwner && (
           <div className="bg-gray-50 px-4 py-4 sm:px-6 flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => navigate(`/roommate/edit/${post.id}`)}>
+            <Button variant="outline" onClick={() => navigate(`/roommate/${post.id}/edit`)}>
               Edit Post
             </Button>
             <Button variant="danger" onClick={handleDelete}>

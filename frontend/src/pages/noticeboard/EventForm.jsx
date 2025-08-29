@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 const EventForm = ({ isEdit = false }) => {
   const { id } = useParams();
@@ -34,6 +35,9 @@ const EventForm = ({ isEdit = false }) => {
     registration_deadline: '',
     images: []
   });
+
+  // Separate state for image files
+  const [imageFiles, setImageFiles] = useState([]);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -83,13 +87,17 @@ const EventForm = ({ isEdit = false }) => {
   };
 
   const handleImageChange = (e) => {
-    // In a real app, you would upload images to a storage service
-    // and get back URLs to save in your database
     const files = Array.from(e.target.files);
-    const newImages = files.map(file => ({
+    
+    // Store the actual file objects
+    setImageFiles(prev => [...prev, ...files]);
+    
+    // Create preview URLs for display
+    const newImages = files.map((file, index) => ({
       id: URL.createObjectURL(file),
       image: URL.createObjectURL(file),
-      is_primary: false
+      is_primary: imageFiles.length === 0 && index === 0, // First image is primary
+      file: file // Keep reference to the file
     }));
     
     setFormData(prev => ({
@@ -100,7 +108,18 @@ const EventForm = ({ isEdit = false }) => {
 
   const removeImage = (index) => {
     const newImages = [...formData.images];
-    newImages.splice(index, 1);
+    const removedImage = newImages.splice(index, 1)[0];
+    
+    // Also remove from imageFiles if it's a new file
+    if (removedImage.file) {
+      const fileIndex = imageFiles.findIndex(file => file === removedImage.file);
+      if (fileIndex !== -1) {
+        const newFiles = [...imageFiles];
+        newFiles.splice(fileIndex, 1);
+        setImageFiles(newFiles);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       images: newImages
@@ -181,11 +200,25 @@ const EventForm = ({ isEdit = false }) => {
           ? formData.registration_deadline 
           : null
       };
+
+      // Remove the images array from submissionData as we'll handle files separately
+      delete submissionData.images;
+
+      // Add the primary image file if available
+      if (imageFiles.length > 0) {
+        const primaryImageIndex = formData.images.findIndex(img => img.is_primary);
+        const primaryFile = primaryImageIndex >= 0 && formData.images[primaryImageIndex].file 
+          ? formData.images[primaryImageIndex].file 
+          : imageFiles[0];
+        submissionData.image = primaryFile;
+      }
       
       if (isEdit) {
         await updateEvent(id, submissionData);
+        toast.success('Event updated successfully!');
       } else {
         await createEvent(submissionData);
+        toast.success('Event created successfully! It will appear on the noticeboard once approved.');
       }
       
       navigate('/noticeboard');

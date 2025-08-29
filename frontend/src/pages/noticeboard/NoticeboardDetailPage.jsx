@@ -214,7 +214,7 @@ const NoticeboardDetailPage = () => {
               <div className="flex space-x-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate(`/noticeboard/edit/${event.id}`)}
+                  onClick={() => navigate(`/noticeboard/${event.id}/edit`)}
                 >
                   Edit Event
                 </Button>
@@ -230,10 +230,10 @@ const NoticeboardDetailPage = () => {
         </div>
 
         {/* Event Image */}
-        {event.images && event.images.length > 0 && (
+        {(event.primary_image || (event.images && event.images.length > 0)) && (
           <div className="h-64 bg-gray-100 overflow-hidden">
             <img
-              src={event.images[0].image}
+              src={event.primary_image || event.images[0].image}
               alt={event.title}
               className="w-full h-full object-cover"
             />

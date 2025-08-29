@@ -18,7 +18,6 @@ const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
 
   const conditionColors = {
     'new': 'bg-green-100 text-green-800',
-    'like new': 'bg-blue-100 text-blue-800',
     'good': 'bg-yellow-100 text-yellow-800',
     'fair': 'bg-orange-100 text-orange-800',
     'poor': 'bg-red-100 text-red-800',
@@ -26,13 +25,11 @@ const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
 
   const statusLabels = {
     'available': 'Available',
-    'pending': 'Pending',
     'sold': 'Sold',
   };
 
   const statusColors = {
     'available': 'bg-green-100 text-green-800',
-    'pending': 'bg-yellow-100 text-yellow-800',
     'sold': 'bg-gray-100 text-gray-800',
   };
 
@@ -46,7 +43,8 @@ const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
   };
 
   const { user } = useAuth();
-  const isOwner = user?.id === book.posted_by?.id;
+  // Check ownership using string comparison to handle UUID properly
+  const isOwner = user?.id && book.posted_by?.id && String(user.id) === String(book.posted_by.id);
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg relative">
@@ -67,9 +65,7 @@ const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              if (window.confirm('Are you sure you want to delete this book?')) {
-                onDelete(book.id);
-              }
+              onDelete(book.id);
             }}
             className="p-2 rounded-full bg-white/80 text-red-600 hover:bg-red-50 transition-all shadow-sm"
             title="Delete book"
