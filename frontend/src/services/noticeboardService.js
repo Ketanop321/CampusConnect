@@ -7,10 +7,14 @@ export const getEvents = async (params = {}) => {
     console.log('Fetching events from:', API_URL);
     console.log('With params:', params);
     
-    const response = await api.get(API_URL, { params });
-    console.log('API Response status:', response.status);
+    const response = await api.get(API_URL, { 
+      params
+    });
     
-    // The response data should be an array of events
+    console.log('API Response status:', response.status);
+    console.log('Full response:', response);
+    
+    // If no data in response, return empty array
     if (!response.data) {
       console.error('No data in response');
       return [];
@@ -18,23 +22,25 @@ export const getEvents = async (params = {}) => {
     
     // Log the response structure for debugging
     console.log('Response data type:', typeof response.data);
-    console.log('Response data keys:', Object.keys(response.data));
     
-    // If the response is an array, return it directly
+    // Handle different response formats
+    let events = [];
+    
+    // Case 1: Direct array of events
     if (Array.isArray(response.data)) {
-      console.log('Returning events array with', response.data.length, 'events');
-      return response.data;
+      events = response.data;
+    }
+    // Case 2: Object with results array (Django REST Framework pagination)
+    else if (response.data.results && Array.isArray(response.data.results)) {
+      events = response.data.results;
+    }
+    // Case 3: Single event object (shouldn't happen, but handle it)
+    else if (response.data.id) {
+      events = [response.data];
     }
     
-    // If the response is an object with a results array (Django REST Framework default)
-    if (response.data.results && Array.isArray(response.data.results)) {
-      console.log('Returning events from results array with', response.data.results.length, 'events');
-      return response.data.results;
-    }
-    
-    // If we get here, log the unexpected format and return an empty array
-    console.warn('Unexpected API response format. Response data:', response.data);
-    return [];
+    console.log(`Returning ${events.length} events`);
+    return events;
   } catch (error) {
     console.error('Error in getEvents:', error);
     throw error;

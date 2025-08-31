@@ -188,6 +188,22 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# Allow additional headers for CORS
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+    'pragma',
+    'expires',
+]
+
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
