@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   BookOpenIcon, 
   CurrencyDollarIcon, 
@@ -13,6 +14,7 @@ import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 
 const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
@@ -163,19 +165,25 @@ const BookItem = ({ book, onPurchase, onEdit, onDelete }) => {
             )}
           </div>
           
-          {book.status === 'available' && (
-            <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/book-bank/${book.id}`)}
+            >
+              View Details
+            </Button>
+            {book.status === 'available' && (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handlePurchase}
                 disabled={isPurchasing}
-                className="ml-3"
               >
                 {isPurchasing ? 'Processing...' : 'Buy Now'}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

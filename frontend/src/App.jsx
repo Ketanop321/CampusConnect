@@ -14,6 +14,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import LostAndFoundPage from './pages/lost-found/LostAndFoundPage';
 import LostFoundDetailPage from './pages/lost-found/LostFoundDetailPage';
 import BookBankPage from './pages/book-bank/BookBankPage';
+import BookDetailPage from './pages/book-bank/BookDetailPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 import RoommatePage from './pages/roommate/RoommatePage';
@@ -78,7 +79,11 @@ function App() {
               <Route index element={<LostAndFoundPage />} />
               <Route path=":id" element={<LostFoundDetailPage />} />
             </Route>
-            <Route path="book-bank" element={<BookBankPage />} />
+            {/* Book Bank Routes */}
+            <Route path="book-bank">
+              <Route index element={<BookBankPage />} />
+              <Route path=":id" element={<BookDetailPage />} />
+            </Route>
             <Route path="profile" element={<ProfilePage />} />
             
             {/* Roommate Routes */}
