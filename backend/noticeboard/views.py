@@ -69,7 +69,13 @@ class EventViewSet(viewsets.ModelViewSet):
         # In production, you might want to implement an approval workflow
         is_approved = True  # Temporary: auto-approve all events
         print(f"Creating event. User is staff: {self.request.user.is_staff}, Event approved: {is_approved}")
-        serializer.save(organizer=self.request.user, is_approved=is_approved)
+        event = serializer.save(organizer=self.request.user, is_approved=is_approved)
+        print(f"Event created with ID: {event.id}")
+        if hasattr(event, 'images'):
+            print(f"Event has {event.images.count()} images")
+            for img in event.images.all():
+                print(f"Image URL: {img.image.url}")
+        return event
 
 class EventCommentViewSet(viewsets.ModelViewSet):
     queryset = EventComment.objects.all()

@@ -3,10 +3,24 @@ from .models import Event, EventComment, EventRegistration, EventImage
 from accounts.serializers import UserSerializer
 
 class EventImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
     class Meta:
         model = EventImage
         fields = ['id', 'image', 'is_primary', 'uploaded_at']
         read_only_fields = ['id', 'uploaded_at']
+    
+    def get_image(self, obj):
+        """Get the absolute URL of the image."""
+        if obj.image:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            else:
+                # Fallback: construct absolute URL manually
+                base_url = 'http://localhost:8000'  # You might want to make this configurable
+                return f"{base_url}{obj.image.url}"
+        return None
 
 class EventCommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -67,8 +81,16 @@ class EventSerializer(serializers.ModelSerializer):
         if primary_image and primary_image.image:
             request = self.context.get('request')
             if request is not None:
-                return request.build_absolute_uri(primary_image.image.url)
-            return primary_image.image.url
+                full_url = request.build_absolute_uri(primary_image.image.url)
+                print(f"Primary image URL for event {obj.id}: {full_url}")
+                return full_url
+            else:
+                # Fallback: construct absolute URL manually
+                base_url = 'http://localhost:8000'  # You might want to make this configurable
+                full_url = f"{base_url}{primary_image.image.url}"
+                print(f"Primary image URL (manual construction) for event {obj.id}: {full_url}")
+                return full_url
+        print(f"No primary image found for event {obj.id}")
         return None
     
     def create(self, validated_data):

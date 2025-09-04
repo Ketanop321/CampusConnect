@@ -231,12 +231,17 @@ const NoticeboardDetailPage = () => {
 
         {/* Event Image */}
         {(event.primary_image || (event.images && event.images.length > 0)) && (
-          <div className="h-64 bg-gray-100 overflow-hidden">
+          <div className="relative h-64 md:h-80 bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden">
             <img
               src={event.primary_image || event.images[0].image}
               alt={event.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image failed to load:', e.target.src);
+                e.target.style.display = 'none';
+              }}
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
           </div>
         )}
 

@@ -617,11 +617,11 @@ const EventForm = ({ isEdit = false }) => {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {formData.images.map((image, index) => (
                 <div key={image.id} className="relative group">
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
+                  <div className="w-full h-32 overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 shadow-sm">
                     <img
                       src={image.image}
                       alt={`Event ${index + 1}`}
-                      className="h-full w-full object-cover object-center"
+                      className="h-full w-full object-cover object-center transition-transform group-hover:scale-105"
                     />
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity">
