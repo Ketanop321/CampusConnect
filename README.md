@@ -24,12 +24,12 @@ A comprehensive campus management platform built with Django and Django REST Fra
 - Book exchange platform
 - Book status tracking
 
-### 4. Notice Board (Upcoming)
+### 4. Notice Board  
 - Event management
 - Event registration
 - Comments and discussions
 
-### 5. Roommate Finder (Upcoming)
+### 5. Roommate Finder 
 - Room listing and searching
 - Profile matching
 - Contact system
