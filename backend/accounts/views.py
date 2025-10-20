@@ -86,8 +86,7 @@ class DeleteAccountView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Logout the user
-        user.auth_token_set.all().delete()
+        # Delete the user account (JWT tokens are stateless; no server-side revoke required)
         user.delete()
         
         return Response(

@@ -6,7 +6,8 @@ import BookForm from '../../components/book-bank/BookForm';
 import { Button } from '../../components/ui/Button';
 import { getBooks, createBook, updateBook, deleteBook, requestBook } from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
-import { toast } from 'react-toastify';
+import { handleApiError } from '../../utils/errorHandling';
+import toast from 'react-hot-toast';
 
 // Helper function to format book data
 const formatBookData = (book) => {
@@ -82,21 +83,26 @@ const BookBankPage = () => {
       toast.success('Book listed successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to list book');
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     },
   });
 
   // Update book mutation
   const updateBookMutation = useMutation({
-    mutationFn: ({ id, ...data }) => updateBook(id, data),
-    onSuccess: () => {
+    mutationFn: ({ id, bookData }) => updateBook(id, bookData),
+    onSuccess: (data) => {
+      console.log('Update successful:', data);
+      // Invalidate and refetch books to show updated data
       queryClient.invalidateQueries(['books']);
+      queryClient.refetchQueries(['books']);
       setIsFormOpen(false);
       setEditingBook(null);
       toast.success('Book updated successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to update book');
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     },
   });
 
@@ -108,7 +114,8 @@ const BookBankPage = () => {
       toast.success('Book deleted successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete book');
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     },
   });
 
@@ -120,7 +127,8 @@ const BookBankPage = () => {
       toast.success('Book request sent successfully!');
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to send book request');
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     },
   });
 
@@ -147,7 +155,7 @@ const BookBankPage = () => {
 
   const handleSubmitBook = (bookData) => {
     if (editingBook) {
-      updateBookMutation.mutate({ id: editingBook.id, ...bookData });
+      updateBookMutation.mutate({ id: editingBook.id, bookData });
     } else {
       createBookMutation.mutate(bookData);
     }

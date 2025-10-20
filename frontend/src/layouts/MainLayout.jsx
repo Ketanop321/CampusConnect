@@ -4,6 +4,7 @@ import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/ui/Logo';
+import Footer from '../components/Footer';
 
 const navigation = [
   { name: 'Home', href: '/', current: window.location.pathname === '/' },
@@ -175,6 +176,7 @@ export default function MainLayout() {
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

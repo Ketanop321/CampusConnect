@@ -1,7 +1,7 @@
 import api from './api';
 
 const BOOKS_API = '/api/bookbank/books/';
-const BOOK_REQUESTS_API = '/api/bookbank/requests/';
+const BOOK_REQUESTS_API = '/api/bookbank/book-requests/';
 
 // Book API functions
 export const getBooks = async (params = {}) => {
@@ -30,6 +30,22 @@ export const createBook = async (formData) => {
 };
 
 export const updateBook = async (id, bookData) => {
+  // If bookData is already FormData (from BookForm), use it directly
+  if (bookData instanceof FormData) {
+    console.log('Updating book with FormData:');
+    for (let [key, value] of bookData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    
+    const response = await api.patch(`${BOOKS_API}${id}/`, bookData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+  
+  // Otherwise, create FormData from the object (legacy support)
   const formData = new FormData();
   
   // Append all fields to formData

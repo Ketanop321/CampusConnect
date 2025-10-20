@@ -11,7 +11,7 @@ router.register(r'book-images', views.BookImageViewSet, basename='book-image')
 
 # Additional URL patterns for book images
 book_image_urls = [
-    path('<int:book_id>/images/', views.BookImageViewSet.as_view({'get': 'list', 'post': 'create'}), name='book-image-list'),
+    path('<uuid:book_id>/images/', views.BookImageViewSet.as_view({'get': 'list', 'post': 'create'}), name='book-image-list'),
     path('images/<int:pk>/', views.BookImageViewSet.as_view({'delete': 'destroy'}), name='book-image-detail'),
     path('images/<int:pk>/set-primary/', views.BookImageViewSet.as_view({'post': 'set_primary'}), name='book-image-set-primary'),
 ]

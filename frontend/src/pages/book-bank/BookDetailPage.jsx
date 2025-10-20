@@ -8,13 +8,14 @@ import {
   BookOpenIcon,
   CurrencyDollarIcon,
   PencilIcon,
+  PhotoIcon,
   TrashIcon,
-  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import Button from '../../components/ui/Button';
 import { getBook, deleteBook, requestBook } from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
+import { handleApiError } from '../../utils/errorHandling';
 import toast from 'react-hot-toast';
 
 const BookDetailPage = () => {
@@ -75,8 +76,8 @@ const BookDetailPage = () => {
       await requestBook(book.id, 'I am interested in buying this book.');
       toast.success('Purchase request sent successfully!');
     } catch (error) {
-      console.error('Error requesting book:', error);
-      toast.error(error.response?.data?.detail || 'Failed to send purchase request');
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     } finally {
       setIsPurchasing(false);
     }
@@ -93,8 +94,8 @@ const BookDetailPage = () => {
         toast.success('Book deleted successfully!');
         navigate('/book-bank');
       } catch (error) {
-        console.error('Error deleting book:', error);
-        toast.error(error.response?.data?.detail || 'Failed to delete book');
+        const errorMessage = handleApiError(error);
+        toast.error(errorMessage);
       }
     }
   };

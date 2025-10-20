@@ -270,8 +270,8 @@ export const changePassword = async (currentPassword, newPassword) => {
   const token = localStorage.getItem('access_token');
   return await apiRequest(
     '/accounts/change-password/',
-    'POST',
-    { current_password: currentPassword, new_password: newPassword },
+    'PUT',
+    { old_password: currentPassword, password: newPassword, password2: newPassword },
     token
   );
 };

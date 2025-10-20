@@ -36,42 +36,33 @@ api.interceptors.request.use(
 
 // Add a response interceptor for error handling
 // Agar 401 aaya to pehle check karega refresh_token
-// Agar wo mil gaya to POST /auth/token/refresh/ pe token refresh karega
+// Agar wo mil gaya to POST /api/token/refresh/ pe token refresh karega
 // Naya access token set karke automatically same request ko retry karega
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     
-    // If the error status is 401 and we haven't already tried to refresh the token
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
-            refresh: refreshToken
+          const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
+            refresh: refreshToken,
           });
-          
           const { access } = response.data;
           localStorage.setItem('access_token', access);
-          
-          // Update the Authorization header
           originalRequest.headers.Authorization = `Bearer ${access}`;
-          
-          // Retry the original request
           return api(originalRequest);
         }
-      } catch (error) {
-        // If refresh fails, redirect to login
-        console.error('Failed to refresh token:', error);
+      } catch (err) {
+        console.error('Failed to refresh token:', err);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         window.location.href = '/login';
       }
     }
-    
     return Promise.reject(error);
   }
 );

@@ -149,7 +149,13 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData, isSubmitting: propIs
         console.log(`${key}:`, value);
       }
       
-      await onSubmit(formData);
+      const result = await onSubmit(formData);
+      console.log('Form submission result:', result);
+      
+      // Close form after successful update in edit mode  
+      if (isEditMode) {
+        onClose();
+      }
       
       // Reset form if not in edit mode
       if (!isEditMode) {

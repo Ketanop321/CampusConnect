@@ -1,5 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.utils import timezone
 from django.db import models
 from .models import Event, EventComment, EventRegistration
@@ -14,7 +16,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Event.objects.all()
         
-        # Filter by approval status - show approved events by default
+        # Filter by approval status - show approved events b        y default
         # Staff users can see all events
         # Regular users can see approved events + their own events
         if not (self.request.user.is_authenticated and self.request.user.is_staff):
@@ -76,6 +78,39 @@ class EventViewSet(viewsets.ModelViewSet):
             for img in event.images.all():
                 print(f"Image URL: {img.image.url}")
         return event
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def register(self, request, pk=None):
+        """Register the current user for the event (idempotent)."""
+        event = self.get_object()
+        # Check registration requirements and capacity
+        if event.registration_required:
+            if event.registration_deadline and event.registration_deadline < timezone.now():
+                return Response({"detail": "Registration deadline has passed."}, status=400)
+            if event.max_participants and event.registrations.count() >= event.max_participants:
+                return Response({"detail": "Event is full."}, status=400)
+        # Create or get existing registration
+        reg, created = EventRegistration.objects.get_or_create(event=event, user=request.user)
+        serializer = EventRegistrationSerializer(reg, context={'request': request})
+        return Response(serializer.data, status=201 if created else 200)
+
+    @action(detail=True, methods=['get', 'post'], url_path='comments', permission_classes=[permissions.IsAuthenticatedOrReadOnly])
+    def comments(self, request, pk=None):
+        """List or add comments for this event."""
+        event = self.get_object()
+        if request.method.lower() == 'get':
+            qs = event.comments.all().order_by('created_at')
+            serializer = EventCommentSerializer(qs, many=True, context={'request': request})
+            return Response(serializer.data)
+
+        # POST: create a new comment
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=401)
+        serializer = EventCommentSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(event=event, user=request.user)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
 
 class EventCommentViewSet(viewsets.ModelViewSet):
     queryset = EventComment.objects.all()

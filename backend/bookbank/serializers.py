@@ -92,11 +92,10 @@ class BookRequestSerializer(serializers.ModelSerializer):
         model = BookRequest
         fields = [
             'id', 'book', 'requested_by', 'message', 'status', 'status_display',
-            'registration_date', 'attended', 'notes', 'created_at', 'updated_at'
+            'created_at', 'updated_at'
         ]
         read_only_fields = [
-            'id', 'requested_by', 'status', 'registration_date', 'attended',
-            'created_at', 'updated_at'
+            'id', 'requested_by', 'status', 'created_at', 'updated_at'
         ]
     
     def validate(self, data):
