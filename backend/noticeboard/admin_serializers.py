@@ -46,7 +46,7 @@ class AdminEventSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'images', 'comments', 'registrations',
             'is_upcoming', 'is_ongoing', 'registration_count'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'organizer']
+        read_only_fields = ['created_at', 'updated_at', 'organizer', 'organizer_name', 'organizer_email', 'images', 'comments', 'registrations', 'is_upcoming', 'is_ongoing', 'registration_count']
 
     def validate(self, data):
         """
@@ -57,7 +57,7 @@ class AdminEventSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("End datetime must occur after start datetime")
         
         if 'registration_deadline' in data and 'start_datetime' in data:
-            if data['registration_deadline'] > data['start_datetime']:
+            if data['registration_deadline'] is not None and data['registration_deadline'] > data['start_datetime']:
                 raise serializers.ValidationError("Registration deadline must be before the event starts")
         
         return data

@@ -82,15 +82,12 @@ class EventSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request is not None:
                 full_url = request.build_absolute_uri(primary_image.image.url)
-                print(f"Primary image URL for event {obj.id}: {full_url}")
                 return full_url
             else:
                 # Fallback: construct absolute URL manually
                 base_url = 'http://localhost:8000'  # You might want to make this configurable
                 full_url = f"{base_url}{primary_image.image.url}"
-                print(f"Primary image URL (manual construction) for event {obj.id}: {full_url}")
                 return full_url
-        print(f"No primary image found for event {obj.id}")
         return None
     
     def create(self, validated_data):

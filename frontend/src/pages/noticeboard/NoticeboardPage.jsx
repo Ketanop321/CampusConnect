@@ -5,7 +5,7 @@ import { getEvents, deleteEvent } from '../../services/noticeboardService';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 const NoticeboardPage = () => {
   const [events, setEvents] = useState([]);
@@ -38,27 +38,13 @@ const NoticeboardPage = () => {
       if (filters.date_range === 'past') params.is_past = true;
       if (filters.is_online !== '') params.is_online = filters.is_online === 'true';
 
-      console.log('Fetching events with params:', params);
-
       // The getEvents function now handles the response format
       const eventsData = await getEvents(params);
 
       if (!Array.isArray(eventsData)) {
-        console.error('Expected an array of events but got:', eventsData);
         setEvents([]);
         return;
       }
-
-      console.log('Successfully fetched', eventsData.length, 'events');
-      // Debug: log image URLs
-      eventsData.forEach(event => {
-        if (event.primary_image || (event.images && event.images.length > 0)) {
-          console.log(`Event "${event.title}" image URLs:`, {
-            primary_image: event.primary_image,
-            images: event.images
-          });
-        }
-      });
       setEvents(eventsData);
     } catch (err) {
       console.error('Error fetching events:', err);
@@ -111,7 +97,8 @@ const NoticeboardPage = () => {
   const canEditEvent = useMemo(() => {
     return (event) => {
       if (!user) return false;
-      return user.is_staff || user.id === event.organizer?.id;
+      // Only admin who created the event (organizer) can edit/delete
+      return !!(user.is_staff && user.id === event.organizer?.id);
     };
   }, [user]);
 
@@ -142,7 +129,6 @@ const NoticeboardPage = () => {
     );
   }
 
-  console.log('Filtering events. Total events:', events?.length || 0);
   const filteredEvents = (Array.isArray(events) ? events : []).filter(event => {
     if (!event) return false;
 
@@ -185,12 +171,14 @@ const NoticeboardPage = () => {
             <FunnelIcon className="h-5 w-5 mr-2" />
             Filters
           </Button>
-          <Link to="/noticeboard/new">
-            <Button>
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Create Event
-            </Button>
-          </Link>
+          {user?.is_staff && (
+            <Link to="/noticeboard/new">
+              <Button>
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Create Event
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -299,15 +287,17 @@ const NoticeboardPage = () => {
             <p className="mt-1 text-sm text-gray-500">
               Try adjusting your search or filter to find what you're looking for.
             </p>
-            <div className="mt-6">
-              <Link
-                to="/noticeboard/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                New Event
-              </Link>
-            </div>
+            {user?.is_staff && (
+              <div className="mt-6">
+                <Link
+                  to="/noticeboard/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  New Event
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">

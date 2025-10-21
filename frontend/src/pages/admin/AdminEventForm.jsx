@@ -9,7 +9,7 @@ import {
   adminRejectEvent
 } from '../../services/noticeboardService';
 import { Button } from '../../components/ui/Button';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminEventForm = ({ isEdit = false }) => {
@@ -110,6 +110,19 @@ const AdminEventForm = ({ isEdit = false }) => {
         registration_deadline: formData.registration_required ? formData.registration_deadline : null,
         meeting_link: formData.is_online ? formData.meeting_link : '',
       };
+
+      // Remove read-only fields - they're set automatically by backend
+      delete submissionData.organizer;
+      delete submissionData.organizer_name;
+      delete submissionData.organizer_email;
+      delete submissionData.is_upcoming;
+      delete submissionData.is_ongoing;
+      delete submissionData.registration_count;
+      delete submissionData.created_at;
+      delete submissionData.updated_at;
+      delete submissionData.images;
+      delete submissionData.comments;
+      delete submissionData.registrations;
 
       if (isEdit) {
         await adminUpdateEvent(id, submissionData);

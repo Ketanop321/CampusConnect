@@ -36,8 +36,8 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Lost & Found', to: '/lost-found' },
     { name: 'Book Bank', to: '/book-bank' },
-    { name: 'Campus Connect', to: '/connect' },
-    { name: 'Notice Board', to: '/noticeboard' },
+    { name: 'Roommate', to: '/roommate' },
+    { name: 'Noticeboard', to: '/noticeboard' },
   ];
 
   return (
@@ -71,6 +71,18 @@ const Navbar = () => {
                   {item.name}
                 </Link>
               ))}
+              {isAuthenticated && user?.is_staff && (
+                <Link
+                  to="/admin/dashboard"
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    location.pathname.startsWith('/admin')
+                      ? 'text-white bg-indigo-700'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                  } transition-colors duration-200`}
+                >
+                  Admin
+                </Link>
+              )}
             </div>
           </div>
 
@@ -157,6 +169,18 @@ const Navbar = () => {
                   {item.name}
                 </Link>
               ))}
+              {isAuthenticated && user?.is_staff && (
+                <Link
+                  to="/admin/dashboard"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    location.pathname.startsWith('/admin')
+                      ? 'bg-indigo-700 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
 
               {isAuthenticated ? (
                 <>

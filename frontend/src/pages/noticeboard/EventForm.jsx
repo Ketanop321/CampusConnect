@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 const EventForm = ({ isEdit = false }) => {
   const { id } = useParams();

@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email, password) => {
+  const login = async (email, password, redirectTo) => {
     try {
       setIsLoading(true);
       const result = await authService.login(email, password);
@@ -48,7 +48,9 @@ export const AuthProvider = ({ children }) => {
         setToken(accessToken);
         setIsAuthenticated(true);
         toast.success('Logged in successfully');
-        navigate('/');
+        // Prefer explicit redirect target, else send staff to admin dashboard, others to home
+        const target = redirectTo || (result.user.is_staff ? '/admin/dashboard' : '/');
+        navigate(target, { replace: true });
         return true;
       }
       

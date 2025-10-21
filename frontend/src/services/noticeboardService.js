@@ -4,45 +4,14 @@ const API_URL = '/api/noticeboard/events/'; // Include trailing slash for Django
 
 export const getEvents = async (params = {}) => {
   try {
-    console.log('Fetching events from:', API_URL);
-    console.log('With params:', params);
-    
-    const response = await api.get(API_URL, { 
-      params
-    });
-    
-    console.log('API Response status:', response.status);
-    console.log('Full response:', response);
-    
-    // If no data in response, return empty array
-    if (!response.data) {
-      console.error('No data in response');
-      return [];
-    }
-    
-    // Log the response structure for debugging
-    console.log('Response data type:', typeof response.data);
-    
-    // Handle different response formats
-    let events = [];
-    
-    // Case 1: Direct array of events
-    if (Array.isArray(response.data)) {
-      events = response.data;
-    }
-    // Case 2: Object with results array (Django REST Framework pagination)
-    else if (response.data.results && Array.isArray(response.data.results)) {
-      events = response.data.results;
-    }
-    // Case 3: Single event object (shouldn't happen, but handle it)
-    else if (response.data.id) {
-      events = [response.data];
-    }
-    
-    console.log(`Returning ${events.length} events`);
-    return events;
+    const response = await api.get(API_URL, { params });
+    if (!response.data) return [];
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data.results && Array.isArray(response.data.results)) return response.data.results;
+    if (response.data.id) return [response.data];
+    return [];
   } catch (error) {
-    console.error('Error in getEvents:', error);
+    // Surface errors to callers; they handle user feedback
     throw error;
   }
 };
@@ -117,5 +86,81 @@ export const getEventComments = async (eventId) => {
 export const addEventComment = async (eventId, commentData) => {
   const cleanId = eventId.replace(/^\/+|\/+$/g, '');
   const response = await api.post(`${API_URL}${cleanId}/comments/`, commentData);
+  return response.data;
+};
+
+// =====================
+// Admin Noticeboard APIs
+// =====================
+
+const ADMIN_API_BASE = '/api/noticeboard/admin';
+
+export const adminGetEvents = async (params = {}) => {
+  const response = await api.get(`${ADMIN_API_BASE}/events/`, { params });
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.results)) return data.results;
+  if (data && data.id) return [data];
+  return [];
+};
+
+export const adminGetEvent = async (id) => {
+  const cleanId = id.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.get(`${ADMIN_API_BASE}/events/${cleanId}/`);
+  return response.data;
+};
+
+export const adminCreateEvent = async (data) => {
+  // Admin serializer expects JSON fields; images are managed via separate model
+  const response = await api.post(`${ADMIN_API_BASE}/events/`, data);
+  return response.data;
+};
+
+export const adminUpdateEvent = async (id, data) => {
+  const cleanId = id.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.patch(`${ADMIN_API_BASE}/events/${cleanId}/`, data);
+  return response.data;
+};
+
+export const adminDeleteEvent = async (id) => {
+  const cleanId = id.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.delete(`${ADMIN_API_BASE}/events/${cleanId}/`);
+  return response.data;
+};
+
+export const adminApproveEvent = async (id) => {
+  const cleanId = id.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.post(`${ADMIN_API_BASE}/events/${cleanId}/approve/`);
+  return response.data;
+};
+
+export const adminRejectEvent = async (id) => {
+  const cleanId = id.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.post(`${ADMIN_API_BASE}/events/${cleanId}/reject/`);
+  return response.data;
+};
+
+export const adminGetEventRegistrations = async (eventId) => {
+  const response = await api.get(`${ADMIN_API_BASE}/registrations/`, { params: { event: eventId } });
+  return response.data;
+};
+
+export const adminUpdateRegistrationStatus = async (registrationId, status) => {
+  const cleanId = registrationId.toString().replace(/^\/+|\/+$/g, '');
+  if (status === 'confirmed') {
+    const response = await api.post(`${ADMIN_API_BASE}/registrations/${cleanId}/mark_attended/`);
+    return response.data;
+  }
+  // Treat any non-confirmed as not attended; store status in notes for audit
+  const response = await api.patch(`${ADMIN_API_BASE}/registrations/${cleanId}/`, {
+    attended: false,
+    notes: status,
+  });
+  return response.data;
+};
+
+export const adminGetEventStatistics = async (eventId) => {
+  const cleanId = eventId.toString().replace(/^\/+|\/+$/g, '');
+  const response = await api.get(`${ADMIN_API_BASE}/events/${cleanId}/statistics/`);
   return response.data;
 };

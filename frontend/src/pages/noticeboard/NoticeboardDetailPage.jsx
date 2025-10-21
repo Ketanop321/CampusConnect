@@ -129,7 +129,7 @@ const NoticeboardDetailPage = () => {
   };
 
   const isRegistered = event?.registrations?.some(reg => reg.user.id === user?.id);
-  const isOwner = user && event?.organizer?.id === user.id;
+  const isOwner = !!(user && user.is_staff && event?.organizer?.id === user.id);
   const registrationClosed = event?.registration_required && 
     event.registration_deadline && 
     new Date(event.registration_deadline) < new Date();
@@ -267,7 +267,7 @@ const NoticeboardDetailPage = () => {
                   <form onSubmit={handleCommentSubmit} className="mb-6">
                     <div className="flex space-x-3">
                       <div className="flex-shrink-0">
-                        <span className="inline-block h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 font-medium flex items-center justify-center">
+                        <span className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 font-medium flex items-center justify-center">
                           {user.name?.charAt(0) || 'U'}
                         </span>
                       </div>
@@ -316,7 +316,7 @@ const NoticeboardDetailPage = () => {
                     comments.map((comment) => (
                       <div key={comment.id} className="flex space-x-3">
                         <div className="flex-shrink-0">
-                          <span className="inline-block h-10 w-10 rounded-full bg-gray-100 text-gray-600 font-medium flex items-center justify-center">
+                          <span className="h-10 w-10 rounded-full bg-gray-100 text-gray-600 font-medium flex items-center justify-center">
                             {comment.user?.name?.charAt(0) || 'U'}
                           </span>
                         </div>

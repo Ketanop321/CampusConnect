@@ -13,13 +13,15 @@ from .admin_serializers import (
     AdminEventRegistrationSerializer
 )
 from accounts.permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrganizerOrReadOnly
 
 class AdminEventViewSet(viewsets.ModelViewSet):
     """
     Admin-only viewset for managing events with additional admin features.
     """
     serializer_class = AdminEventSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    # Admin-only access; object-level writes restricted to organizer or superuser
+    permission_classes = [IsAuthenticated, IsAdminUser, IsAdminOrganizerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = [
         'event_type', 'is_online', 'is_free', 'registration_required', 'is_approved'
@@ -40,6 +42,11 @@ class AdminEventViewSet(viewsets.ModelViewSet):
         if is_approved is not None:
             queryset = queryset.filter(is_approved=is_approved.lower() == 'true')
 
+        # Convenience filter for upcoming events
+        is_upcoming = self.request.query_params.get('is_upcoming')
+        if is_upcoming is not None and is_upcoming.lower() == 'true':
+            queryset = queryset.filter(start_datetime__gt=timezone.now())
+
         # Filter by date ranges
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
@@ -50,6 +57,11 @@ class AdminEventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(end_datetime__date__lte=end_date)
 
         return queryset
+
+    def perform_create(self, serializer):
+        # Organizer is the requesting admin; auto-approve on create
+        event = serializer.save(organizer=self.request.user, is_approved=True)
+        return event
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):

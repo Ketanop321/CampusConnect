@@ -11,6 +11,7 @@ const buttonVariants = cva(
         secondary: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 focus:ring-indigo-500',
         outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500',
         danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+        success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
         ghost: 'hover:bg-gray-100 hover:text-gray-900 focus:ring-indigo-500',
         link: 'text-indigo-600 hover:text-indigo-800 hover:underline focus:ring-indigo-500',
       },

@@ -11,9 +11,8 @@ import {
 } from '../../services/noticeboardService';
 import { format, parseISO, isBefore, isAfter } from 'date-fns';
 import { Button } from '../../components/ui/Button';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from '../../components/ui/Tabs';
-import { Modal } from '../../components/ui/Modal';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+// Tabs and Modal components are not available; using simple buttons and native confirm
 
 export const AdminEventDetailPage = () => {
   const { id } = useParams();
@@ -23,7 +22,6 @@ export const AdminEventDetailPage = () => {
   const [registrations, setRegistrations] = useState([]);
   const [registrationLoading, setRegistrationLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -33,11 +31,10 @@ export const AdminEventDetailPage = () => {
     return format(parseISO(dateString), 'PPpp');
   };
 
-  // Check if event has started
-  const hasStarted = event ? isBefore(new Date(), parseISO(event.start_datetime)) : false;
-  
-  // Check if event has ended
-  const hasEnded = event ? isAfter(new Date(), parseISO(event.end_datetime)) : false;
+  // Status helpers
+  const now = new Date();
+  const hasStarted = event ? isAfter(now, parseISO(event.start_datetime)) : false;
+  const hasEnded = event ? isAfter(now, parseISO(event.end_datetime)) : false;
   
   // Check if registration is open
   const isRegistrationOpen = event => {
@@ -220,13 +217,11 @@ export const AdminEventDetailPage = () => {
         </div>
         
         <div className="flex space-x-2">
-          <Button 
-            as={Link} 
-            to={`/admin/events/${id}/edit`}
-            variant="secondary"
-          >
-            Edit Event
-          </Button>
+          <Link to={`/admin/events/${id}/edit`}>
+            <Button variant="secondary">
+              Edit Event
+            </Button>
+          </Link>
           
           {!event.is_approved && (
             <Button 
@@ -240,7 +235,11 @@ export const AdminEventDetailPage = () => {
           
           <Button 
             variant="danger"
-            onClick={() => setShowDeleteModal(true)}
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+                handleDelete();
+              }
+            }}
             disabled={deleting}
           >
             {deleting ? 'Deleting...' : 'Delete'}
@@ -249,18 +248,33 @@ export const AdminEventDetailPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onChange={setActiveTab}>
-        <TabList>
-          <Tab value="details">Event Details</Tab>
-          <Tab value="registrations" disabled={!event.registration_required}>
-            Registrations ({registrations.length})
-          </Tab>
-          <Tab value="analytics">Analytics</Tab>
-        </TabList>
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          {[
+            { key: 'details', label: 'Event Details', disabled: false },
+            { key: 'registrations', label: `Registrations (${registrations.length})`, disabled: !event.registration_required },
+            { key: 'analytics', label: 'Analytics', disabled: false },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => !tab.disabled && setActiveTab(tab.key)}
+              disabled={tab.disabled}
+              className={
+                `whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium ` +
+                (activeTab === tab.key
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300') +
+                (tab.disabled ? ' opacity-50 cursor-not-allowed' : '')
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        <TabPanels className="mt-6">
-          {/* Event Details Tab */}
-          <TabPanel value="details">
+      <div className="mt-6">
+        {activeTab === 'details' && (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
               <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -351,10 +365,9 @@ export const AdminEventDetailPage = () => {
                 </div>
               </div>
             </div>
-          </TabPanel>
+        )}
 
-          {/* Registrations Tab */}
-          <TabPanel value="registrations">
+        {activeTab === 'registrations' && (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
               <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -465,10 +478,9 @@ export const AdminEventDetailPage = () => {
                 </div>
               )}
             </div>
-          </TabPanel>
+        )}
 
-          {/* Analytics Tab */}
-          <TabPanel value="analytics">
+        {activeTab === 'analytics' && (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
               <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -511,34 +523,8 @@ export const AdminEventDetailPage = () => {
                 </div>
               </div>
             </div>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => !deleting && setShowDeleteModal(false)}
-        title="Delete Event"
-        actions={[
-          {
-            label: 'Cancel',
-            onClick: () => setShowDeleteModal(false),
-            disabled: deleting,
-            variant: 'secondary',
-          },
-          {
-            label: deleting ? 'Deleting...' : 'Delete',
-            onClick: handleDelete,
-            disabled: deleting,
-            variant: 'danger',
-          },
-        ]}
-      >
-        <p className="text-sm text-gray-500">
-          Are you sure you want to delete this event? This action cannot be undone.
-        </p>
-      </Modal>
+        )}
+      </div>
     </div>
   );
 };

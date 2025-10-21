@@ -7,28 +7,23 @@ from django.db import models
 from .models import Event, EventComment, EventRegistration
 from .serializers import EventSerializer, EventCommentSerializer, EventRegistrationSerializer
 from accounts.permissions import IsOwnerOrReadOnly
+from .permissions import IsAdminOrganizerOrReadOnly
 
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # Read is open to everyone. Writes are limited to staff organizers (or superuser)
+    permission_classes = [IsAdminOrganizerOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
     
     def get_queryset(self):
         queryset = Event.objects.all()
-        
-        # Filter by approval status - show approved events b        y default
+
+        # Filter by approval status - show approved events by default
         # Staff users can see all events
-        # Regular users can see approved events + their own events
-        if not (self.request.user.is_authenticated and self.request.user.is_staff):
-            if self.request.user.is_authenticated:
-                # Show approved events OR events created by the current user
-                from django.db.models import Q
-                queryset = queryset.filter(
-                    Q(is_approved=True) | Q(organizer=self.request.user)
-                )
-            else:
-                # Anonymous users can only see approved events
-                queryset = queryset.filter(is_approved=True)
+        # Regular users (non-staff) and anonymous users can only see APPROVED events created by STAFF
+        user = self.request.user
+        if not (user.is_authenticated and user.is_staff):
+            queryset = queryset.filter(is_approved=True, organizer__is_staff=True)
         
         # Handle query parameters
         is_upcoming = self.request.query_params.get('is_upcoming')
@@ -65,18 +60,9 @@ class EventViewSet(viewsets.ModelViewSet):
         return context
 
     def perform_create(self, serializer):
-        # Auto-approve events for staff users, otherwise require approval
-        is_approved = self.request.user.is_staff
-        # For non-staff users, still set is_approved to True for testing
-        # In production, you might want to implement an approval workflow
-        is_approved = True  # Temporary: auto-approve all events
-        print(f"Creating event. User is staff: {self.request.user.is_staff}, Event approved: {is_approved}")
+        # Only staff users can create events (enforced by permission). Auto-approve staff-created events by default.
+        is_approved = bool(self.request.user and self.request.user.is_staff)
         event = serializer.save(organizer=self.request.user, is_approved=is_approved)
-        print(f"Event created with ID: {event.id}")
-        if hasattr(event, 'images'):
-            print(f"Event has {event.images.count()} images")
-            for img in event.images.all():
-                print(f"Image URL: {img.image.url}")
         return event
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])

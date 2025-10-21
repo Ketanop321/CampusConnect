@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminLayout = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname.startsWith(path);
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -27,30 +29,20 @@ const AdminLayout = () => {
             <span className="ml-2">Manage Events</span>
           </Link>
           <Link 
-            to="/admin/approvals" 
-            className={`flex items-center p-2 rounded-lg ${isActive('/admin/approvals') ? 'bg-indigo-700' : 'hover:bg-indigo-700'}`}
+            to="/admin/events?status=pending" 
+            className={`flex items-center p-2 rounded-lg ${isActive('/admin/events') ? 'bg-indigo-700' : 'hover:bg-indigo-700'}`}
           >
             <span className="ml-2">Pending Approvals</span>
             <span className="ml-auto bg-yellow-500 text-xs text-white px-2 py-1 rounded-full">
-              {/* You can add a counter here later */}
+              {/* Counter can be populated later */}
             </span>
-          </Link>
-          <Link 
-            to="/admin/users" 
-            className={`flex items-center p-2 rounded-lg ${isActive('/admin/users') ? 'bg-indigo-700' : 'hover:bg-indigo-700'}`}
-          >
-            <span className="ml-2">User Management</span>
           </Link>
         </nav>
         <div className="absolute bottom-0 w-64 p-4 border-t border-indigo-700">
           <Button 
             variant="outline" 
             className="w-full text-white border-white hover:bg-white hover:text-indigo-800"
-            onClick={() => {
-              // Handle logout
-              localStorage.removeItem('token');
-              window.location.href = '/';
-            }}
+            onClick={logout}
           >
             Logout
           </Button>
@@ -67,10 +59,10 @@ const AdminLayout = () => {
             </h2>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Admin User
+                {user?.email || 'Admin'}
               </span>
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
-                AU
+                {(user?.email?.charAt(0) || 'A').toUpperCase()}
               </div>
             </div>
           </div>

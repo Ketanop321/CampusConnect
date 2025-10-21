@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -15,6 +15,8 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
   
   const {
     register,
@@ -31,7 +33,7 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
-      const success = await login(data.email, data.password);
+      const success = await login(data.email, data.password, from);
       if (success) {
         // Navigation is handled in the AuthContext after successful login
         return;
